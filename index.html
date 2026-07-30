@@ -1,0 +1,2537 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LPIC 101 暗記帳</title>
+<style>
+  :root {
+    --bg: #f6f5f2;
+    --card: #ffffff;
+    --ink: #26282b;
+    --sub: #6b6f76;
+    --accent: #2f6f4f;
+    --accent-bg: #e7f0ea;
+    --wrong: #b3432b;
+    --wrong-bg: #fbeae5;
+    --line: #e2e0da;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    display: flex;
+    justify-content: center;
+    padding: 24px 16px;
+  }
+  .app {
+    width: 100%;
+    max-width: 520px;
+  }
+  h1 {
+    font-size: 18px;
+    margin: 0 0 4px;
+  }
+  .sub {
+    color: var(--sub);
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+  .progress-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    color: var(--sub);
+    margin-bottom: 8px;
+  }
+  .bar {
+    height: 6px;
+    background: var(--line);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .bar-fill {
+    height: 100%;
+    background: var(--accent);
+    transition: width .3s ease;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 22px;
+  }
+  #quizArea .card.origin-orig {
+    background: #fff4e6;
+    border-color: #e8a33d;
+  }
+  #quizArea .card.origin-new {
+    background: #e9f1fb;
+    border-color: #3d7dc9;
+  }
+  .category {
+    display: inline-block;
+    font-size: 12px;
+    color: var(--accent);
+    background: var(--accent-bg);
+    padding: 3px 10px;
+    border-radius: 100px;
+    margin-bottom: 12px;
+  }
+  .question {
+    font-size: 16px;
+    line-height: 1.6;
+    margin-bottom: 18px;
+    white-space: pre-wrap;
+  }
+  .choice {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    color: var(--ink);
+  }
+  .choice:hover { border-color: var(--accent); }
+  .choice.correct { background: var(--accent-bg); border-color: var(--accent); }
+  .choice.wrong { background: var(--wrong-bg); border-color: var(--wrong); }
+  .choice:disabled { cursor: default; }
+  .explain {
+    margin-top: 14px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.6;
+    background: var(--bg);
+    display: none;
+  }
+  .explain.show { display: block; }
+  .result-label {
+    font-weight: bold;
+    margin-bottom: 4px;
+  }
+  .result-label.ok { color: var(--accent); }
+  .result-label.ng { color: var(--wrong); }
+  .next-btn {
+    margin-top: 16px;
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    background: var(--ink);
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    display: none;
+  }
+  .next-btn.show { display: block; }
+  .finish {
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .start-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 22px;
+  }
+  .field-label {
+    font-size: 13px;
+    font-weight: bold;
+    margin: 0 0 10px;
+  }
+  .cat-list { margin-bottom: 22px; }
+  .cat-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 11px 14px;
+    margin-bottom: 8px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  .cat-item:hover { border-color: var(--accent); }
+  .cat-item.on {
+    background: var(--accent-bg);
+    border-color: var(--accent);
+  }
+  .cat-count {
+    font-size: 12px;
+    color: var(--sub);
+  }
+  .cat-item.on .cat-count { color: var(--accent); }
+  .count-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 22px;
+  }
+  .count-btn {
+    flex: 1;
+    padding: 10px 4px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--ink);
+  }
+  .count-btn.on {
+    background: var(--accent-bg);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .start-btn {
+    width: 100%;
+    padding: 13px;
+    border: none;
+    border-radius: 8px;
+    background: var(--ink);
+    color: #fff;
+    font-size: 15px;
+    cursor: pointer;
+  }
+  .start-btn:disabled {
+    background: var(--line);
+    color: var(--sub);
+    cursor: default;
+  }
+  .quit-btn {
+    display: block;
+    margin: 14px auto 0;
+    padding: 6px 14px;
+    border: none;
+    background: none;
+    color: var(--sub);
+    font-size: 13px;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+  .finish .score {
+    font-size: 36px;
+    font-weight: bold;
+    color: var(--accent);
+    margin: 12px 0;
+  }
+  .retry-btn {
+    margin-top: 16px;
+    padding: 10px 20px;
+    border: 1px solid var(--ink);
+    background: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>LPIC101 予想問題集</h1>
+  <div class="sub">出題範囲(システム構成・パッケージ管理・コマンド・ファイルシステム)をもとにしたオリジナル問題です</div>
+
+  <div id="startArea">
+    <div class="start-card">
+      <p class="field-label">出題する分野を選ぶ</p>
+      <div class="cat-list" id="catList"></div>
+
+      <p class="field-label">出題数</p>
+      <div class="count-row" id="countRow"></div>
+
+      <button class="start-btn" id="startBtn">解き始める</button>
+    </div>
+  </div>
+
+  <div id="quizArea" style="display:none">
+    <div class="progress-row">
+      <span id="progressText">1 / 15</span>
+      <span id="scoreText">正解 0</span>
+    </div>
+    <div class="bar"><div class="bar-fill" id="barFill" style="width:0%"></div></div>
+
+    <div class="card" id="quizCard">
+      <div class="category" id="category"></div>
+      <div class="question" id="question"></div>
+      <div id="choices"></div>
+      <div class="explain" id="explain">
+        <div class="result-label" id="resultLabel"></div>
+        <div id="explainText"></div>
+      </div>
+      <button class="next-btn" id="nextBtn">次の問題へ</button>
+    </div>
+    <button class="quit-btn" id="quitBtn">分野の選択に戻る</button>
+  </div>
+
+  <div id="finishArea" style="display:none">
+    <div class="card finish">
+      <div>お疲れさまでした</div>
+      <div class="score" id="finalScore">0 / 15</div>
+      <button class="retry-btn" id="retryBtn">もう一度解く</button>
+      <button class="quit-btn" id="backBtn">分野の選択に戻る</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const OLD_QUESTIONS = [
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "PCの電源を入れてから最初に実行され、ハードウェアの初期化を行うファームウェアはどれか。",
+    choices: ["GRUB", "BIOS/UEFI", "systemd", "init"],
+    answer: 1,
+    explain: "BIOS/UEFIは電源投入後に最初に動作するファームウェアで、ハードウェアチェック後にブートローダーを呼び出します。GRUBはその後に起動するブートローダーです。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "現在起動しているLinuxのランレベル(または対応するsystemdのターゲット)を確認するコマンドはどれか。",
+    choices: ["runlevel", "uptime", "hostname", "uname -r"],
+    answer: 0,
+    explain: "runlevelコマンドで現在および直前のランレベルを確認できます。systemd環境ではsystemctl get-defaultも使われます。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "/proc/cpuinfo に格納されている情報として正しいものはどれか。",
+    choices: ["ディスクの使用量", "CPUの詳細情報", "ネットワーク設定", "起動中のプロセス一覧"],
+    answer: 1,
+    explain: "/proc/cpuinfoにはCPUのモデル名やコア数、フラグなどの情報が格納されています。/procは実行中のカーネル情報を参照する仮想ファイルシステムです。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "Debian系ディストリビューションで依存関係を自動解決しながらパッケージをインストールするコマンドはどれか。",
+    choices: ["rpm -i", "dpkg -i", "apt install", "yum install"],
+    answer: 2,
+    explain: "apt installは依存パッケージを自動的に解決してインストールします。dpkgは低レベルツールで依存関係の自動解決は行いません。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "RPM系ディストリビューションで、すでにインストール済みのパッケージ一覧を表示するコマンドはどれか。",
+    choices: ["rpm -qa", "rpm -e", "dpkg -l", "apt list"],
+    answer: 0,
+    explain: "rpm -qaはインストール済みの全パッケージを一覧表示します。-eはパッケージの削除(erase)オプションです。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "dpkgコマンドでパッケージを完全に削除(設定ファイルも含む)するオプションはどれか。",
+    choices: ["-r", "-P", "-i", "-l"],
+    answer: 1,
+    explain: "dpkg -P(--purge)は設定ファイルも含めて完全にパッケージを削除します。-r(--remove)は設定ファイルを残して削除します。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "ファイル内から特定の文字列を含む行を検索するコマンドはどれか。",
+    choices: ["find", "grep", "sort", "cut"],
+    answer: 1,
+    explain: "grepはファイルの内容から指定したパターンにマッチする行を検索します。findはファイル自体の検索に使います。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "ファイル名やディレクトリ構造の条件からファイルを検索するコマンドはどれか。",
+    choices: ["grep", "locate", "find", "which"],
+    answer: 2,
+    explain: "findは名前・サイズ・更新日時など様々な条件を指定してファイルシステムを走査し検索します。locateは事前に作成されたデータベースから検索します。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "コマンドの出力からテキスト置換や削除を行うストリームエディタはどれか。",
+    choices: ["awk", "sed", "tr", "cat"],
+    answer: 1,
+    explain: "sed(stream editor)は入力を1行ずつ処理しながら置換・削除などの編集を行います。「s/検索文字列/置換文字列/」という書式がよく使われます。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "ファイルの所有者を変更するコマンドはどれか。",
+    choices: ["chmod", "chown", "chgrp", "umask"],
+    answer: 1,
+    explain: "chownはファイルの所有者(および所有グループ)を変更します。chmodはパーミッション、chgrpは所有グループのみを変更します。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "パイプ(|)の役割として正しいものはどれか。",
+    choices: [
+      "コマンドをバックグラウンドで実行する",
+      "あるコマンドの標準出力を別のコマンドの標準入力に渡す",
+      "コマンドの実行結果をファイルに保存する",
+      "複数のコマンドを同時に並列実行する"
+    ],
+    answer: 1,
+    explain: "パイプは左側のコマンドの標準出力を右側のコマンドの標準入力として接続します。ファイルへの保存はリダイレクト(> や >>)を使います。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "/etc/fstab の役割として正しいものはどれか。",
+    choices: [
+      "起動時に自動マウントするファイルシステムの情報を定義する",
+      "インストール済みパッケージの一覧を保持する",
+      "ユーザーのパスワード情報を保持する",
+      "ネットワークインターフェースの設定を保持する"
+    ],
+    answer: 0,
+    explain: "/etc/fstabには、起動時にマウントするファイルシステムのデバイス・マウントポイント・種類・オプションなどを定義します。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "既存のファイルへの参照を追加し、同じinodeを共有するリンクはどれか。",
+    choices: ["シンボリックリンク", "ハードリンク", "マウントポイント", "シンボリックマウント"],
+    answer: 1,
+    explain: "ハードリンクは同じinodeを指す別名で、元ファイルを消してもデータは残ります。シンボリックリンクは別inodeを持ち、パスを参照する仕組みです。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "ディスクの空き容量をファイルシステムごとに確認するコマンドはどれか。",
+    choices: ["du -sh", "df -h", "ls -l", "fdisk -l"],
+    answer: 1,
+    explain: "df -hはマウントされている各ファイルシステムの使用量・空き容量を人間に読みやすい形式で表示します。duはファイルやディレクトリ単位の使用量を表示します。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "ファイルシステムの整合性をチェックし、必要に応じて修復するコマンドはどれか。",
+    choices: ["mkfs", "fsck", "mount", "tune2fs"],
+    answer: 1,
+    explain: "fsck(file system check)はファイルシステムのエラーを検査・修復します。mkfsは新規にファイルシステムを作成するコマンドです。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "デバイスファイルが格納されているディレクトリはどれか。",
+    choices: ["/dev", "/etc", "/var", "/opt"],
+    answer: 0,
+    explain: "/devにはハードディスクやシリアルポートなどのデバイスファイルが格納されています。デバイスドライバはこれらのファイルを通してアクセスされます。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "システムのシャットダウンを指定した時間後に実行するコマンドはどれか。",
+    choices: ["halt", "shutdown", "reboot", "kill"],
+    answer: 1,
+    explain: "shutdownは時刻や遅延時間を指定してシステムを安全に停止・再起動できます。例えば「shutdown -h +10」で10分後に停止します。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "カーネルが読み込んでいるモジュールの一覧を表示するコマンドはどれか。",
+    choices: ["lsmod", "lspci", "lsusb", "lsblk"],
+    answer: 0,
+    explain: "lsmodは現在ロードされているカーネルモジュールの一覧を表示します。lspciやlsusbはそれぞれPCI・USBデバイスの一覧表示です。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "systemdを使用するシステムで、サービスの状態を確認するコマンドはどれか。",
+    choices: ["service status", "systemctl status", "initctl status", "chkconfig status"],
+    answer: 1,
+    explain: "systemctl statusで対象サービスが起動中か、有効化されているかなどを確認できます。systemdはSysVinitに代わる初期化システムです。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "yumやdnfのようなRPM系高レベルパッケージ管理ツールの特徴として正しいものはどれか。",
+    choices: [
+      "依存関係を自動的に解決してインストールする",
+      "パッケージのファイルを一つずつ手動で配置する",
+      "ソースコードからのビルドしか行えない",
+      "Debian系専用のツールである"
+    ],
+    answer: 0,
+    explain: "yum/dnfはリポジトリ情報を利用し、依存パッケージを自動的に解決してインストールします。rpmコマンド単体では依存解決は行われません。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "すでにインストールされているパッケージが、どのファイルを含んでいるかを確認するrpmのオプションはどれか。",
+    choices: ["rpm -qi", "rpm -ql", "rpm -qf", "rpm -qc"],
+    answer: 1,
+    explain: "rpm -ql パッケージ名で、そのパッケージに含まれるファイルの一覧を表示します。-qiはパッケージ情報、-qfは指定ファイルがどのパッケージに属するかを調べます。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "apt-getでインストール済みパッケージのバージョン情報も含めた一覧を確認したい場合に使うコマンドはどれか。",
+    choices: ["apt-cache search", "dpkg -l", "apt-get update", "apt-get clean"],
+    answer: 1,
+    explain: "dpkg -lはインストール済みパッケージ名とバージョンなどの一覧を表示します。apt-cache searchはリポジトリ内のパッケージ検索に使います。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "テキストファイルの行数・単語数・バイト数を数えるコマンドはどれか。",
+    choices: ["wc", "nl", "cut", "uniq"],
+    answer: 0,
+    explain: "wc(word count)はファイルの行数(-l)・単語数(-w)・バイト数(-c)を数えます。nlは行番号を付加して表示するコマンドです。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "ファイルの中身を並び替えて出力するコマンドはどれか。",
+    choices: ["sort", "sed", "grep", "tee"],
+    answer: 0,
+    explain: "sortはファイルの内容を行単位で昇順・降順に並び替えます。-nオプションで数値順、-rオプションで逆順にできます。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "実行結果を画面に表示しつつ、同時にファイルへも保存するコマンドはどれか。",
+    choices: ["cat", "tee", "cp", "xargs"],
+    answer: 1,
+    explain: "teeはパイプで受け取った標準入力を画面に表示しつつ、指定したファイルにも書き込みます。「T字管」のように出力を分岐させることからこの名前が付いています。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "実行可能ファイルの絶対パスをPATH環境変数の中から検索して表示するコマンドはどれか。",
+    choices: ["whereis", "which", "type", "locate"],
+    answer: 1,
+    explain: "whichはPATHに設定されたディレクトリを検索し、実行されるコマンドの絶対パスを表示します。whereisはマニュアルやソースの場所も含めて検索します。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "ファイルシステムをマウントする際に使用するコマンドはどれか。",
+    choices: ["mount", "fsck", "mkfs", "umount"],
+    answer: 0,
+    explain: "mountは指定したデバイスやパーティションを、指定したマウントポイントに接続します。取り外す場合はumountを使います。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "ルートディレクトリ直下で、システム起動に必要な設定ファイルが格納されるディレクトリはどれか。",
+    choices: ["/etc", "/tmp", "/usr", "/mnt"],
+    answer: 0,
+    explain: "/etcにはシステムやアプリケーションの設定ファイルが格納されます。fstabやpasswdなど、多くの重要な設定ファイルがここにあります。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "ハードディスクのパーティション情報を確認・編集するコマンドはどれか。",
+    choices: ["fdisk", "mkfs", "df", "du"],
+    answer: 0,
+    explain: "fdiskはパーティションテーブルの表示・作成・削除・変更を行うコマンドです。GPTディスクにはgdiskやpartedもよく使われます。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "UEFIがBIOSと比較して持つ特徴として正しいものはどれか。",
+    choices: [
+      "2TBを超える大容量ディスクからの起動に対応している",
+      "テキストベースの設定画面しか持たない",
+      "MBR形式のパーティションにしか対応しない",
+      "16ビット動作モードでのみ動作する"
+    ],
+    answer: 0,
+    explain: "UEFIはGPT形式のディスクに対応し、2TBを超える大容量ディスクからの起動が可能です。BIOSはMBR形式が基本で容量に制限があります。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "PCIバスに接続されているデバイスの一覧を表示するコマンドはどれか。",
+    choices: ["lspci", "lsusb", "lsblk", "lscpu"],
+    answer: 0,
+    explain: "lspciはPCIバスに接続されたデバイス情報を表示します。USBデバイスの一覧にはlsusbを使います。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "systemdでデフォルトのターゲット(旧ランレベルに相当)を確認するコマンドはどれか。",
+    choices: ["systemctl get-default", "systemctl list-units", "systemctl daemon-reload", "systemctl isolate"],
+    answer: 0,
+    explain: "systemctl get-defaultで起動時に使われるデフォルトターゲットを確認できます。variables graphical.targetやmulti-user.targetなどが該当します。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "カーネルのバージョン情報を表示するコマンドはどれか。",
+    choices: ["uname -r", "hostname", "date", "who"],
+    answer: 0,
+    explain: "uname -rは現在動作しているカーネルのバージョンを表示します。uname -aとするとシステム全体の情報を確認できます。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "システムを即座に再起動するコマンドとして適切なものはどれか。",
+    choices: ["reboot", "halt", "poweroff", "logout"],
+    answer: 0,
+    explain: "rebootはシステムを即座に再起動します。haltは停止、poweroffは電源を切る点で動作が異なります。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "起動時のログを記録し、後から確認できるsystemdのコマンドはどれか。",
+    choices: ["journalctl", "dmesg -c", "last", "history"],
+    answer: 0,
+    explain: "journalctlはsystemdのジャーナル(ログ)を参照するコマンドです。起動時のメッセージも「journalctl -b」で確認できます。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "ハードウェアの割り込み要求(IRQ)の使用状況を確認できるファイルはどれか。",
+    choices: ["/proc/interrupts", "/proc/meminfo", "/proc/version", "/proc/mounts"],
+    answer: 0,
+    explain: "/proc/interruptsには各デバイスが使用しているIRQ番号と割り込み回数が記録されています。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "USBデバイスの接続状況を確認するコマンドはどれか。",
+    choices: ["lsusb", "lspci", "lsblk", "lsof"],
+    answer: 0,
+    explain: "lsusbは接続されているUSBデバイスの一覧とその詳細を表示します。lsofは開いているファイルの一覧を表示するコマンドです。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "カーネルモジュールをロードするコマンドはどれか。",
+    choices: ["modprobe", "insmod", "どちらも使われる", "rmmod"],
+    answer: 2,
+    explain: "modprobeとinsmodはどちらもモジュールをロードできますが、modprobeは依存関係を解決してくれるため一般的にはこちらが推奨されます。rmmodはモジュールを削除するコマンドです。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "aptでシステム上のパッケージ情報を最新のリポジトリ情報に更新するコマンドはどれか。",
+    choices: ["apt update", "apt upgrade", "apt install", "apt autoremove"],
+    answer: 0,
+    explain: "apt updateはリポジトリのパッケージ一覧(メタデータ)を最新化します。実際のパッケージ本体を更新するのはapt upgradeです。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "不要になった依存パッケージを一括で削除するaptのサブコマンドはどれか。",
+    choices: ["apt autoremove", "apt purge", "apt clean", "apt list"],
+    answer: 0,
+    explain: "apt autoremoveは他のパッケージから依存されなくなったパッケージを自動的に削除します。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "rpmパッケージをインストール済みの状態から確認せず強制的にインストールするオプションはどれか。",
+    choices: ["--force", "--test", "--nodeps", "-q"],
+    answer: 0,
+    explain: "--forceは既存ファイルとの衝突チェックなどを無視して強制的にインストールします。依存関係を無視する場合は--nodepsを使います。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "dpkgパッケージのインストール状況(選択状態)を一覧するコマンドはどれか。",
+    choices: ["dpkg --get-selections", "dpkg -c", "dpkg -x", "dpkg --configure"],
+    answer: 0,
+    explain: "dpkg --get-selectionsはパッケージごとのインストール選択状態(install/deinstall等)を一覧表示します。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "aptのリポジトリ情報が記載されている設定ファイルはどれか。",
+    choices: ["/etc/apt/sources.list", "/etc/yum.conf", "/etc/dpkg/dpkg.cfg", "/etc/hosts"],
+    answer: 0,
+    explain: "/etc/apt/sources.listにはパッケージ取得先のリポジトリURLが記載されています。関連する追加設定は/etc/apt/sources.list.d/にも置かれます。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "rpmでパッケージに含まれるファイルの改ざんの有無を検証するオプションはどれか。",
+    choices: ["-V", "-e", "-U", "-i"],
+    answer: 0,
+    explain: "rpm -Vはインストール済みパッケージのファイルサイズやパーミッションなどを検証し、変更があれば表示します。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "特定のパッケージがどのリポジトリから提供されているか調べるyum/dnfのサブコマンドはどれか。",
+    choices: ["repoquery", "provides", "list installed", "clean all"],
+    answer: 0,
+    explain: "dnf repoquery(またはyum repoquery)は指定したパッケージがどのリポジトリに存在するかなどの情報を確認できます。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "ソースコードからソフトウェアをインストールする際の一般的な手順の順序として正しいものはどれか。",
+    choices: [
+      "./configure → make → make install",
+      "make install → ./configure → make",
+      "make → ./configure → make install",
+      "make install → make → ./configure"
+    ],
+    answer: 0,
+    explain: "一般的には環境を確認するconfigure、コンパイルするmake、インストールするmake installの順に実行します。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "Debian系でローカルの.debファイルの依存関係を自動解決しつつインストールするコマンドはどれか。",
+    choices: ["apt install ./package.deb", "dpkg -c package.deb", "dpkg -l", "apt-cache show"],
+    answer: 0,
+    explain: "apt install ./package.debとすることで、ローカルの.debファイルでも依存関係を自動解決しながらインストールできます。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "共有ライブラリの依存関係情報を管理し、キャッシュを更新するコマンドはどれか。",
+    choices: ["ldconfig", "ldd", "nm", "strip"],
+    answer: 0,
+    explain: "ldconfigは共有ライブラリのキャッシュ(ld.so.cache)を更新します。lddは実行ファイルが依存するライブラリを表示するコマンドです。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "テキストの指定した列(フィールド)だけを抜き出すコマンドはどれか。",
+    choices: ["cut", "paste", "join", "split"],
+    answer: 0,
+    explain: "cutは行の中から指定した文字位置やフィールド(区切り文字で分けた列)を抜き出します。「-f」で列番号、「-d」で区切り文字を指定します。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "連続する重複行をまとめる、または重複行を検出するコマンドはどれか。",
+    choices: ["uniq", "sort", "wc", "diff"],
+    answer: 0,
+    explain: "uniqは隣接する重複行をまとめます。事前にsortしておかないと離れた場所にある重複行はまとめられません。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "2つのファイルの差分を表示するコマンドはどれか。",
+    choices: ["diff", "cmp", "comm", "patch"],
+    answer: 0,
+    explain: "diffは2つのファイルの内容を比較し、行単位での差分を表示します。cmpはバイト単位での比較、patchはdiffの結果を適用するコマンドです。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "標準入力から受け取った引数を使って別のコマンドを実行するコマンドはどれか。",
+    choices: ["xargs", "tee", "exec", "eval"],
+    answer: 0,
+    explain: "xargsは標準入力から受け取った文字列を引数として、指定したコマンドに渡して実行します。「find . | xargs rm」のような使い方が代表的です。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "ファイルの先頭部分だけを表示するコマンドはどれか。",
+    choices: ["head", "tail", "less", "more"],
+    answer: 0,
+    explain: "headはファイルの先頭(デフォルト10行)を表示します。末尾を見たい場合はtailを使います。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "ログファイルなどをリアルタイムで追跡し、追記される内容を表示し続けるオプションはどれか。",
+    choices: ["tail -f", "head -f", "cat -f", "less -f"],
+    answer: 0,
+    explain: "tail -fはファイルの末尾を表示した後、ファイルに追記された内容をリアルタイムで表示し続けます。ログの監視によく使われます。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "正規表現を使ってパターンにマッチする行を拡張的に検索したい場合のgrepオプションはどれか。",
+    choices: ["-E", "-c", "-v", "-l"],
+    answer: 0,
+    explain: "grep -E(またはegrep)は拡張正規表現を使用できるようにします。-vはマッチしない行を表示、-cはマッチ数のカウントです。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "コマンドの実行結果を数値的に処理し、列ごとの集計なども行えるテキスト処理言語はどれか。",
+    choices: ["awk", "sed", "grep", "cut"],
+    answer: 0,
+    explain: "awkはフィールドごとにテキストを処理できるプログラミング言語で、集計や条件処理など柔軟なテキスト加工が可能です。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "コマンド履歴を表示するコマンドはどれか。",
+    choices: ["history", "last", "who", "w"],
+    answer: 0,
+    explain: "historyは現在のシェルセッションで実行したコマンドの履歴を表示します。lastはログイン履歴を表示するコマンドです。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "現在実行中のプロセスをリアルタイムに監視し、CPU使用率順などで表示するコマンドはどれか。",
+    choices: ["top", "ps", "jobs", "bg"],
+    answer: 0,
+    explain: "topは実行中のプロセスをリアルタイムに更新しながら一覧表示します。psは特定時点のプロセス状態をスナップショットとして表示します。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "ファイルのパーミッションを数値(8進数)で変更するコマンドの例として正しいものはどれか。",
+    choices: ["chmod 755 file.txt", "chown 755 file.txt", "chgrp 755 file.txt", "umask 755 file.txt"],
+    answer: 0,
+    explain: "chmod 755のように8進数でパーミッション(所有者rwx、グループr-x、その他r-x)を指定できます。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "新規に作成するファイルのデフォルトパーミッションを制御する値はどれか。",
+    choices: ["umask", "chmod", "chown", "setuid"],
+    answer: 0,
+    explain: "umaskは新規作成されるファイルやディレクトリから、デフォルトで除外されるパーミッションビットを設定します。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "スワップ領域として使用するパーティションを有効化するコマンドはどれか。",
+    choices: ["swapon", "swapoff", "mkswap", "fdisk"],
+    answer: 0,
+    explain: "swaponはスワップ領域を有効にします。事前にmkswapでスワップ用のフォーマットをしておく必要があります。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "ディレクトリやファイルの実行者権限を一時的に所有者権限に変更する特殊なパーミッションビットはどれか。",
+    choices: ["SUID", "スティッキービット", "ACL", "umask"],
+    answer: 0,
+    explain: "SUID(Set User ID)が設定された実行ファイルは、実行したユーザーに関わらず所有者の権限で動作します。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "/tmpディレクトリのように、誰でも作成できるが他人のファイルは削除できないようにする特殊なパーミッションはどれか。",
+    choices: ["スティッキービット", "SUID", "SGID", "umask"],
+    answer: 0,
+    explain: "スティッキービットが設定されたディレクトリでは、ファイルの所有者以外は削除・リネームができなくなります。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "ファイルシステムの種類やマウントオプションを一時的に変更(再マウント)する際に使うコマンドはどれか。",
+    choices: ["mount -o remount", "umount -f", "fsck -y", "mkfs -t"],
+    answer: 0,
+    explain: "mount -o remountは既にマウントされているファイルシステムのオプションを、アンマウントせずに変更できます。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "現在マウントされているファイルシステムの一覧を確認できるファイルはどれか。",
+    choices: ["/proc/mounts", "/proc/version", "/proc/cpuinfo", "/proc/uptime"],
+    answer: 0,
+    explain: "/proc/mountsには現在マウントされているファイルシステムの一覧がリアルタイムに反映されます。mountコマンドの出力もここを参照しています。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "論理ボリュームマネージャ(LVM)で、ボリュームグループの一覧を表示するコマンドはどれか。",
+    choices: ["vgdisplay", "lvdisplay", "pvdisplay", "vgcreate"],
+    answer: 0,
+    explain: "vgdisplayはボリュームグループ(VG)の情報を表示します。物理ボリュームはpvdisplay、論理ボリュームはlvdisplayで確認します。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "ファイルシステムの種類をext4からext3などへ変更する場合に関係するコマンドはどれか。",
+    choices: ["tune2fs", "fsck", "mount", "df"],
+    answer: 0,
+    explain: "tune2fsはext系ファイルシステムの属性を変更するコマンドで、ジャーナリングの有効・無効化などに使われます。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "指定したディレクトリ以下のファイルサイズの合計を表示するコマンドはどれか。",
+    choices: ["du -sh", "df -h", "wc -l", "ls -la"],
+    answer: 0,
+    explain: "du -shは指定したディレクトリ以下のファイルサイズ合計を人間に読みやすい単位で表示します。df -hはファイルシステム全体の空き容量を表示します。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "GRUB2の設定ファイルとして正しいものはどれか。",
+    choices: ["/etc/grub.conf", "/boot/grub/grub.cfg", "/etc/lilo.conf", "/boot/vmlinuz"],
+    answer: 1,
+    explain: "GRUB2は/boot/grub/grub.cfgを設定ファイルとして使用します。このファイルは直接編集せず、/etc/default/grubを編集して再生成するのが基本です。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "GRUB2の設定ファイルを自動生成するコマンドはどれか。",
+    choices: ["grub-install", "grub-mkconfig", "grub-md5-crypt", "mkinitrd"],
+    answer: 1,
+    explain: "grub-mkconfig(Debian系ではupdate-grub)で/boot/grub/grub.cfgを再生成します。grub-installはブートローダ本体をディスクに書き込むコマンドです。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "カーネルが起動時に出力したメッセージを表示するコマンドはどれか。",
+    choices: ["lastlog", "dmesg", "uptime", "vmstat"],
+    answer: 1,
+    explain: "dmesgはカーネルのリングバッファに記録されたメッセージを表示します。ハードウェア認識の状況を確認する際によく使われます。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "カーネルが認識しているデバイス情報を階層構造で提供する仮想ファイルシステムはどれか。",
+    choices: ["/sys", "/tmp", "/srv", "/opt"],
+    answer: 0,
+    explain: "/sys(sysfs)はデバイスやドライバの情報をツリー構造で提供します。/procがプロセス中心なのに対し、/sysはデバイス中心の情報を扱います。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "デバイスの接続に応じて/dev以下のデバイスファイルを動的に作成する仕組みはどれか。",
+    choices: ["cron", "udev", "syslog", "inetd"],
+    answer: 1,
+    explain: "udevはカーネルからのイベントを受け取り、デバイスファイルを動的に作成・削除します。USBメモリの抜き差しなどに対応できます。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "systemdでサービスをシステム起動時に自動起動する設定にするコマンドはどれか。",
+    choices: ["systemctl start", "systemctl enable", "systemctl mask", "systemctl reload"],
+    answer: 1,
+    explain: "systemctl enableは自動起動を有効化します。startはその場での起動のみで、再起動後には反映されません。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "SysVinit環境でデフォルトのランレベルが定義されていた設定ファイルはどれか。",
+    choices: ["/etc/inittab", "/etc/fstab", "/etc/passwd", "/etc/profile"],
+    answer: 0,
+    explain: "/etc/inittabにはデフォルトのランレベルや各ランレベルでの動作が定義されていました。systemd環境ではターゲットに置き換えられています。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "システム稼働中にランレベルを変更するコマンドはどれか。",
+    choices: ["runlevel", "telinit", "sysctl", "chkconfig"],
+    answer: 1,
+    explain: "telinit(またはinit)に数字を渡すことで稼働中にランレベルを切り替えられます。runlevelは確認のみを行うコマンドです。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "搭載メモリ量や使用状況が記録されている仮想ファイルはどれか。",
+    choices: ["/proc/cpuinfo", "/proc/meminfo", "/proc/mounts", "/proc/interrupts"],
+    answer: 1,
+    explain: "/proc/meminfoには物理メモリの総量、空き容量、スワップの使用状況などが記録されています。freeコマンドもこの情報を参照しています。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "管理者が独自に作成・変更したsystemdのユニットファイルを配置する標準的なディレクトリはどれか。",
+    choices: ["/lib/systemd/system", "/etc/systemd/system", "/var/systemd", "/usr/share/systemd"],
+    answer: 1,
+    explain: "/etc/systemd/systemは管理者が設定するユニットファイルの配置場所で、/lib配下のディストリビューション提供分より優先されます。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "指定したファイルがどのRPMパッケージに含まれているかを調べるオプションはどれか。",
+    choices: ["rpm -ql", "rpm -qi", "rpm -qf", "rpm -qa"],
+    answer: 2,
+    explain: "rpm -qf ファイルパス で、そのファイルを提供しているパッケージ名を表示します。逆にパッケージからファイル一覧を見るのは-qlです。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "rpmでパッケージをアップグレードし、未インストールなら新規インストールも行うオプションはどれか。",
+    choices: ["-i", "-U", "-F", "-e"],
+    answer: 1,
+    explain: "-U(--upgrade)はアップグレードを行い、未インストールの場合は新規インストールします。-F(--freshen)はインストール済みの場合のみ更新します。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "指定したファイルがどのDebianパッケージに属するかを調べるコマンドはどれか。",
+    choices: ["dpkg -S", "dpkg -L", "dpkg -l", "dpkg -i"],
+    answer: 0,
+    explain: "dpkg -S ファイルパス でそのファイルを提供するパッケージを検索します。dpkg -L はパッケージに含まれるファイル一覧を表示します。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "リポジトリ内のパッケージをキーワードで検索するコマンドはどれか。",
+    choices: ["apt-cache search", "apt-cache depends", "apt-get clean", "dpkg --configure"],
+    answer: 0,
+    explain: "apt-cache searchはパッケージ名や説明文からキーワードにマッチするパッケージを検索します。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "指定したパッケージが依存しているパッケージを一覧表示するコマンドはどれか。",
+    choices: ["apt-cache search", "apt-cache depends", "apt-cache stats", "apt-get autoclean"],
+    answer: 1,
+    explain: "apt-cache dependsは対象パッケージの依存関係を表示します。逆に「そのパッケージに依存しているもの」はapt-cache rdependsで確認します。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "ダウンロード済みのパッケージファイルを削除してディスク領域を解放するコマンドはどれか。",
+    choices: ["apt update", "apt clean", "apt autoremove", "apt purge"],
+    answer: 1,
+    explain: "apt cleanは/var/cache/apt/archives配下にキャッシュされた.debファイルを削除します。autoremoveは不要な依存パッケージの削除です。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "実行ファイルが依存している共有ライブラリを一覧表示するコマンドはどれか。",
+    choices: ["ldd", "ldconfig", "nm", "objdump"],
+    answer: 0,
+    explain: "ldd 実行ファイル で必要な共有ライブラリとその解決先を表示します。ldconfigはライブラリのキャッシュを更新するコマンドです。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "共有ライブラリの検索パスを追加設定するファイルはどれか。",
+    choices: ["/etc/ld.so.conf", "/etc/profile", "/etc/fstab", "/etc/hosts"],
+    answer: 0,
+    explain: "/etc/ld.so.conf(および/etc/ld.so.conf.d/配下)に検索パスを記述し、ldconfigを実行することでキャッシュに反映されます。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "RPMパッケージからファイルを展開して取り出す際に使うコマンドはどれか。",
+    choices: ["rpm2cpio", "rpmbuild", "rpm -e", "rpm -V"],
+    answer: 0,
+    explain: "rpm2cpioでRPMをcpio形式に変換し、cpioコマンドと組み合わせてインストールせずにファイルを取り出せます。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "パッケージ構成の変更(削除を伴う更新)も許可してシステム全体を更新するaptのサブコマンドはどれか。",
+    choices: ["apt upgrade", "apt dist-upgrade", "apt install", "apt list"],
+    answer: 1,
+    explain: "apt dist-upgrade(apt full-upgrade)は依存関係の解決のために既存パッケージの削除も行いながら更新します。apt upgradeは削除を伴う更新は行いません。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "実行中のプロセスにシグナルを送って終了させるコマンドはどれか。",
+    choices: ["stop", "kill", "end", "halt"],
+    answer: 1,
+    explain: "killはプロセスIDを指定してシグナルを送ります。プロセス名で指定する場合はkillallやpkillを使います。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "プロセスを強制終了させるシグナル(SIGKILL)の番号はどれか。",
+    choices: ["1", "9", "15", "20"],
+    answer: 1,
+    explain: "SIGKILLは番号9で、プロセスに割り込みを許さず強制終了させます。15はSIGTERMで、終了処理を行う余地を与える通常の終了シグナルです。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "コマンドを優先度(nice値)を指定して実行するコマンドはどれか。",
+    choices: ["nice", "renice", "top", "nohup"],
+    answer: 0,
+    explain: "niceは起動時に優先度を指定します。すでに動作中のプロセスの優先度を変更する場合はreniceを使います。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "バックグラウンドで動作中のジョブをフォアグラウンドに切り替えるコマンドはどれか。",
+    choices: ["bg", "fg", "jobs", "disown"],
+    answer: 1,
+    explain: "fgはバックグラウンドジョブを前面に移します。bgは逆に停止中のジョブをバックグラウンドで再開させます。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "ログアウト後もコマンドの実行を継続させるコマンドはどれか。",
+    choices: ["nohup", "bg", "exec", "wait"],
+    answer: 0,
+    explain: "nohupを付けて実行すると、ハングアップシグナル(SIGHUP)を無視するため、ログアウト後も処理が継続します。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "標準エラー出力だけをファイルにリダイレクトする記述はどれか。",
+    choices: ["1> file", "2> file", "&> file", "< file"],
+    answer: 1,
+    explain: "標準エラー出力のファイルディスクリプタは2なので「2> file」と記述します。1は標準出力、「&>」は両方をまとめてリダイレクトします。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "複数のファイルを1つのアーカイブファイルにまとめるコマンドはどれか。",
+    choices: ["gzip", "tar", "bzip2", "xz"],
+    answer: 1,
+    explain: "tarは複数のファイルを1つにまとめるアーカイブコマンドです。圧縮そのものはgzipやbzip2が担い、tarの-zや-jオプションで連携できます。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "gzipで圧縮されたファイルを展開するコマンドとして正しいものはどれか。",
+    choices: ["gzip -d", "gzip -c", "gzip -9", "gzip -l"],
+    answer: 0,
+    explain: "gzip -d(またはgunzip)で展開します。-cは標準出力への書き出し、-9は最高圧縮率の指定です。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "コマンドの使い方を記載したオンラインマニュアルを表示するコマンドはどれか。",
+    choices: ["man", "info", "help", "どれも使える"],
+    answer: 3,
+    explain: "manは最も一般的なマニュアル表示コマンドですが、GNUツールではinfo、シェル組み込みコマンドではhelpも使われます。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "キーワードからマニュアルページを検索するコマンドはどれか。",
+    choices: ["whatis", "apropos", "which", "whereis"],
+    answer: 1,
+    explain: "aproposはキーワードにマッチするマニュアルページを検索します(man -kと同等)。whatisはコマンド名から簡単な説明を1行表示します。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "パーティション上に新しくファイルシステムを作成するコマンドはどれか。",
+    choices: ["fsck", "mkfs", "mount", "blkid"],
+    answer: 1,
+    explain: "mkfsは指定したデバイスにファイルシステムを作成(フォーマット)します。-tオプションでext4やxfsなど種類を指定します。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "ブロックデバイスのUUIDやファイルシステムの種類を表示するコマンドはどれか。",
+    choices: ["blkid", "lsmod", "dmesg", "sync"],
+    answer: 0,
+    explain: "blkidは各デバイスのUUIDやラベル、ファイルシステム種別を表示します。/etc/fstabでUUID指定する際に役立ちます。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "locateコマンドが使用する検索用データベースを更新するコマンドはどれか。",
+    choices: ["updatedb", "makewhatis", "ldconfig", "sync"],
+    answer: 0,
+    explain: "updatedbはファイルパスのデータベースを作り直します。locateはこのデータベースを検索するため、直前に作成したファイルは見つからないことがあります。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "ユーザーごとのディスク使用量を制限する仕組みはどれか。",
+    choices: ["クォータ", "スワップ", "マウント", "ジャーナル"],
+    answer: 0,
+    explain: "クォータ(quota)機能でユーザーやグループごとにディスク使用量やファイル数の上限を設定できます。設定はedquota、確認はrepquotaを使います。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "システムのログファイルが標準的に格納されるディレクトリはどれか。",
+    choices: ["/var/log", "/etc/log", "/usr/log", "/tmp/log"],
+    answer: 0,
+    explain: "/var/logにはsyslogやauth.logなど各種ログファイルが格納されます。/varは頻繁に内容が変化するデータを置くディレクトリです。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "管理者が独自に導入したソフトウェアを配置する標準的なディレクトリはどれか。",
+    choices: ["/usr/bin", "/usr/local", "/bin", "/sbin"],
+    answer: 1,
+    explain: "/usr/localはディストリビューションのパッケージ管理外で、管理者が独自に導入したソフトウェアを配置する場所です。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "/etc/fstabに記載されたファイルシステムをまとめてマウントするコマンドはどれか。",
+    choices: ["mount -a", "mount -o", "mount -t", "mount -r"],
+    answer: 0,
+    explain: "mount -aは/etc/fstabに記載されたエントリのうち、noautoが指定されていないものを一括でマウントします。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "所有者に実行権限を追加するchmodのシンボリック記法はどれか。",
+    choices: ["chmod u+x file", "chmod g+x file", "chmod o+x file", "chmod a-x file"],
+    answer: 0,
+    explain: "uは所有者(user)、gはグループ、oはその他、aは全てを表します。+は権限の追加、-は削除、=は指定した権限への置き換えです。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "ハードリンクに関する制約として正しいものはどれか。",
+    choices: [
+      "別のファイルシステムをまたいで作成できない",
+      "同じディレクトリ内にしか作成できない",
+      "元ファイルを削除すると必ず参照できなくなる",
+      "テキストファイルにしか作成できない"
+    ],
+    answer: 0,
+    explain: "ハードリンクは同じinodeを共有するため、別のファイルシステムをまたいで作成できません。またディレクトリに対しても通常は作成できません。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "ファイルの種類(テキスト、バイナリ、画像など)を判別するコマンドはどれか。",
+    choices: ["stat", "file", "type", "ls -F"],
+    answer: 1,
+    explain: "fileはファイルの内容を解析して種類を判定します。statはファイルのサイズや更新日時などのメタ情報を表示するコマンドです。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "コンピュータの起動時、UEFIがGPT形式のディスクから起動対象を探す際に参照するパーティションはどれか。",
+    choices: ["EFIシステムパーティション", "スワップパーティション", "拡張パーティション", "ブートパーティション(BIOS boot)"],
+    answer: 0,
+    explain: "UEFIはEFIシステムパーティション(ESP)にあるブートローダーを読み込んで起動します。BIOS方式のMBRとは異なる仕組みです。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "ノートPCなどでバッテリー情報を確認できる仮想ファイルが置かれる場所はどれか。",
+    choices: ["/sys/class/power_supply", "/proc/cpuinfo", "/etc/power", "/dev/battery"],
+    answer: 0,
+    explain: "/sys/class/power_supply配下にバッテリーやACアダプタの状態を示すファイルが存在します。/sysはデバイスの状態を表す仮想ファイルシステムです。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "接続されたブロックデバイス(ディスク)の一覧をツリー状に表示するコマンドはどれか。",
+    choices: ["lsblk", "lscpu", "lsusb", "lsattr"],
+    answer: 0,
+    explain: "lsblkはブロックデバイスとそのパーティション構成をツリー形式で表示します。マウントポイントも同時に確認できます。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "CPUの情報(コア数、アーキテクチャなど)を整理して表示するコマンドはどれか。",
+    choices: ["lscpu", "lspci", "lsblk", "lsmod"],
+    answer: 0,
+    explain: "lscpuはCPUのアーキテクチャ、コア数、ソケット数などを整理して表示します。/proc/cpuinfoよりも読みやすい形式です。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "システムの稼働時間や平均負荷(ロードアベレージ)を確認できるコマンドはどれか。",
+    choices: ["uptime", "date", "cal", "who"],
+    answer: 0,
+    explain: "uptimeはシステムの起動からの経過時間と、直近1分・5分・15分の平均負荷を表示します。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "systemdでサービスの自動起動を無効化しつつ、手動での起動も禁止するコマンドはどれか。",
+    choices: ["systemctl mask", "systemctl disable", "systemctl stop", "systemctl reload"],
+    answer: 0,
+    explain: "systemctl maskは対象ユニットを/dev/nullにシンボリックリンクし、手動起動も含めて完全に起動できなくします。disableは自動起動のみを無効化します。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "システムのメッセージログを一元的に管理するsystemdの仕組みはどれか。",
+    choices: ["journald", "syslog-ng", "rsyslog", "klogd"],
+    answer: 0,
+    explain: "systemd-journald(journald)はカーネルやサービスのログをバイナリ形式で一元管理し、journalctlで参照します。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "GRUBの起動メニューで、一時的にカーネルパラメータを編集したい場合に使うキーはどれか。",
+    choices: ["e", "c", "r", "Tab(環境によりeやcの場合あり)"],
+    answer: 3,
+    explain: "GRUB2のメニュー画面では一般的に「e」で編集モード、「c」でコマンドラインに入れますが、バージョンや設定により多少異なります。試験ではeでの編集がよく問われます。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "カーネルパラメータを実行時に変更・確認するコマンドはどれか。",
+    choices: ["sysctl", "systemctl", "modprobe", "insmod"],
+    answer: 0,
+    explain: "sysctlは/proc/sys以下のカーネルパラメータを表示・変更します。永続化するには/etc/sysctl.confに記述します。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "システムの起動に問題がある場合、シングルユーザーモードで起動する目的として適切なものはどれか。",
+    choices: [
+      "最小限のサービスのみで起動し、トラブルシューティングを行う",
+      "ネットワークサービスをすべて有効にする",
+      "GUIログイン画面を表示する",
+      "複数ユーザーの同時ログインを許可する"
+    ],
+    answer: 0,
+    explain: "シングルユーザーモードは最小限のサービスだけを起動する保守用のモードで、システム修復やパスワードリセットなどに使われます。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "カーネルモジュールとその依存関係の情報を保持するファイルはどれか。",
+    choices: ["/lib/modules/<バージョン>/modules.dep", "/etc/modprobe.conf", "/proc/modules", "/etc/fstab"],
+    answer: 0,
+    explain: "modules.depには各モジュールの依存関係が記録されており、modprobeはこの情報を参照して依存モジュールも自動的にロードします。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "systemdでタイマーを使って定期的にジョブを実行する仕組みはどれか。",
+    choices: ["systemdタイマーユニット(.timer)", "cron", "at", "anacron"],
+    answer: 0,
+    explain: "systemdには.timerユニットによるスケジューリング機能があり、cronと同様の定期実行が可能です。旧来の仕組みとしてcronやatも引き続き利用されます。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "起動時にどのサービスが有効化されているか一覧表示するコマンドはどれか。",
+    choices: ["systemctl list-unit-files", "systemctl status", "systemctl show", "systemctl cat"],
+    answer: 0,
+    explain: "systemctl list-unit-filesは各ユニットファイルの有効(enabled)・無効(disabled)状態を一覧表示します。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "PCに搭載されたメモリのモジュール情報(スロットや容量)を確認するコマンドはどれか。",
+    choices: ["dmidecode", "free", "vmstat", "lsblk"],
+    answer: 0,
+    explain: "dmidecodeはBIOS/UEFIが保持するハードウェア情報(メモリスロット構成やマザーボード情報など)を表示します。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "起動時のカーネルパラメータを指定する代表的な設定箇所はどれか。",
+    choices: ["GRUBのlinux行(またはGRUB_CMDLINE_LINUX)", "/etc/fstab", "/etc/hosts", "~/.bashrc"],
+    answer: 0,
+    explain: "起動時のカーネルパラメータはGRUBの設定(/etc/default/grubのGRUB_CMDLINE_LINUXなど)で指定し、update-grub等で反映します。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "systemdのターゲットのうち、GUIログイン画面まで起動するものはどれか。",
+    choices: ["graphical.target", "multi-user.target", "rescue.target", "poweroff.target"],
+    answer: 0,
+    explain: "graphical.targetはmulti-user.targetに加えてディスプレイマネージャなどGUI関連のサービスも起動します。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "システムを保守モード(レスキューモード)で起動するsystemdターゲットはどれか。",
+    choices: ["rescue.target", "graphical.target", "multi-user.target", "reboot.target"],
+    answer: 0,
+    explain: "rescue.targetは最小限のサービスとシングルユーザーシェルを提供する保守用のターゲットです。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "PCIデバイスに割り当てられたリソース(メモリアドレスやIRQ)を確認できるファイルはどれか。",
+    choices: ["/proc/ioports", "/proc/version", "/proc/uptime", "/proc/loadavg"],
+    answer: 0,
+    explain: "/proc/ioportsには各デバイスに割り当てられたI/Oポートアドレスの範囲が記録されています。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "ホットプラグ対応デバイス(USBメモリなど)の抜き差しイベントを検知して処理するデーモンはどれか。",
+    choices: ["udevd", "cron", "syslogd", "atd"],
+    answer: 0,
+    explain: "udevd(systemd-udevd)はカーネルから送られるueventを受け取り、デバイスファイルの作成・削除やルールの適用を行います。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "特定のsystemdユニットの設定内容(ユニットファイルの中身)をそのまま表示するコマンドはどれか。",
+    choices: ["systemctl cat", "systemctl show", "systemctl list-units", "systemctl edit"],
+    answer: 0,
+    explain: "systemctl catはユニットファイルの内容をそのまま出力します。systemctl showはプロパティを詳細に表示します。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "カーネルのバージョンだけでなく、コンパイル日時やホスト名なども含めて表示するunameのオプションはどれか。",
+    choices: ["-a", "-r", "-m", "-s"],
+    answer: 0,
+    explain: "uname -aはカーネル名・ホスト名・バージョン・アーキテクチャなど全ての情報をまとめて表示します。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "システムのプロセッサアーキテクチャ(x86_64など)を表示するunameのオプションはどれか。",
+    choices: ["-m", "-r", "-n", "-v"],
+    answer: 0,
+    explain: "uname -mはハードウェアのアーキテクチャ(machine hardware name)を表示します。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "systemdユニットファイルの中で、他のユニットより先に起動してほしい依存関係を示す設定項目はどれか。",
+    choices: ["Before=", "After=", "Wants=", "Requires="],
+    answer: 1,
+    explain: "After=は指定したユニットの後に起動することを示します。Before=は逆に先に起動することを示す設定です。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "ハードウェアクロック(RTC)とシステムクロックの時刻を確認・同期するコマンドはどれか。",
+    choices: ["hwclock", "date", "timedatectl", "hwclockとtimedatectlのどちらも使われる"],
+    answer: 3,
+    explain: "旧来はhwclockでハードウェアクロックを操作していましたが、systemd環境ではtimedatectlも広く使われます。試験では両方の存在を把握しておく必要があります。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "ディスクのパーティション分割において、/(ルート)とは別に/homeを分離する主な利点はどれか。",
+    choices: [
+      "OSの再インストール時にユーザーデータを保護しやすい",
+      "起動速度が必ず倍になる",
+      "パーミッションの概念が不要になる",
+      "スワップが不要になる"
+    ],
+    answer: 0,
+    explain: "/homeを独立させると、OS再インストール時に/homeをフォーマットせずに残せるため、ユーザーデータの保護がしやすくなります。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "物理ボリュームをLVMで利用可能な状態にするコマンドはどれか。",
+    choices: ["pvcreate", "vgcreate", "lvcreate", "mkfs"],
+    answer: 0,
+    explain: "pvcreateは物理ディスクやパーティションをLVMの物理ボリューム(PV)として初期化します。その後vgcreateでボリュームグループを作成します。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "LVMの論理ボリューム(LV)を作成するコマンドはどれか。",
+    choices: ["lvcreate", "vgcreate", "pvcreate", "lvresize"],
+    answer: 0,
+    explain: "lvcreateはボリュームグループの中に論理ボリュームを作成します。作成後、mkfsでファイルシステムを構築して使用します。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "GRUB Legacyの設定ファイルとして使われていたものはどれか。",
+    choices: ["/boot/grub/menu.lst", "/boot/grub/grub.cfg", "/etc/default/grub", "/etc/lilo.conf"],
+    answer: 0,
+    explain: "GRUB Legacyでは/boot/grub/menu.lstが設定ファイルでした。GRUB2では/boot/grub/grub.cfgに置き換わっています。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "GRUB2でブートローダー本体をディスクのMBRなどにインストールするコマンドはどれか。",
+    choices: ["grub-install", "grub-mkconfig", "update-grub", "grub-set-default"],
+    answer: 0,
+    explain: "grub-installはブートローダー本体を指定したデバイスに書き込みます。設定ファイルの生成はgrub-mkconfigが担当します。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "共有ライブラリのバージョン管理に使われる、実体ファイル名の末尾に付く番号は何と呼ばれるか。",
+    choices: ["SONAME", "GUID", "revision", "epoch"],
+    answer: 0,
+    explain: "共有ライブラリはlibfoo.so.1のような形式でSONAME(共有オブジェクト名)によりバージョン管理されます。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "aptパッケージのインストール前に、実際には適用せず動作だけ確認する(シミュレーションする)オプションはどれか。",
+    choices: ["--simulate(-s)", "--fix-broken", "--no-install-recommends", "--allow-downgrades"],
+    answer: 0,
+    explain: "apt-get -s(--simulate)は実際にはインストールせず、どのような処理が行われるかだけを表示します。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "dpkgでインストール処理が中断したパッケージの設定を完了させるコマンドはどれか。",
+    choices: ["dpkg --configure -a", "dpkg -r", "dpkg -P", "dpkg -i"],
+    answer: 0,
+    explain: "dpkg --configure -aは未設定のまま残っているパッケージの設定処理をまとめて完了させます。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "RPMパッケージをビルドするためのSPECファイルの役割として正しいものはどれか。",
+    choices: [
+      "パッケージのビルド手順やメタ情報を定義する",
+      "パッケージのインストール先を暗号化する",
+      "リポジトリのURLを保持する",
+      "依存パッケージを自動的に削除する"
+    ],
+    answer: 0,
+    explain: "SPECファイルにはソースの場所、ビルド手順、依存関係、パッケージのメタ情報などが記述され、rpmbuildでこれを元にRPMパッケージを作成します。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "YUM/DNFでパッケージグループ(複数パッケージのまとまり)をインストールするサブコマンドはどれか。",
+    choices: ["groupinstall", "install", "reinstall", "localinstall"],
+    answer: 0,
+    explain: "yum groupinstall(dnf group install)は「開発ツール」などパッケージグループ単位でまとめてインストールできます。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "コンテナ技術の説明として適切なものはどれか。",
+    choices: [
+      "ホストOSのカーネルを共有しながらプロセスやファイルシステムを分離する",
+      "必ず専用のハードウェアが必要になる",
+      "仮想マシンと全く同じ仕組みでゲストOSを完全に起動する",
+      "ネットワークを利用できない"
+    ],
+    answer: 0,
+    explain: "コンテナはホストOSのカーネルを共有しつつ、namespaceやcgroupsなどの機能でプロセスやリソースを分離する軽量な仮想化技術です。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "完全仮想化(フル仮想化)の特徴として正しいものはどれか。",
+    choices: [
+      "ゲストOSを一切変更せずにそのまま実行できる",
+      "ゲストOSのカーネルを必ず改変する必要がある",
+      "ホストOSと同じカーネルしか動作しない",
+      "ハードウェアが一切不要になる"
+    ],
+    answer: 0,
+    explain: "完全仮想化はハードウェアを仮想的にエミュレートするため、ゲストOSを変更せずにそのまま動作させられます。準仮想化はゲストOS側の対応が必要です。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "準仮想化(パラバーチャリゼーション)の特徴として正しいものはどれか。",
+    choices: [
+      "ゲストOSがハイパーバイザーを認識し、専用のドライバなどで連携する",
+      "ゲストOSは一切変更せずに動作する",
+      "ハードウェアエミュレーションを一切行わない完全仮想化と同義である",
+      "コンテナと全く同じ仕組みである"
+    ],
+    answer: 0,
+    explain: "準仮想化はゲストOSがハイパーバイザーの存在を認識し、専用のインターフェースを通じて効率よく動作する仮想化方式です。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "クラウド環境で仮想マシンを起動する際に使われる、事前設定済みのディスクイメージを指す用語はどれか。",
+    choices: ["テンプレート(イメージ)", "スナップショット", "リビジョン", "パッチ"],
+    answer: 0,
+    explain: "クラウドでは事前に用意されたOSやアプリ構成済みのテンプレート(イメージ)から仮想マシンを起動することが一般的です。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "rpmパッケージのインストール時に、依存関係のチェックを無視して強制的に進めるオプションはどれか。",
+    choices: ["--nodeps", "--force", "--test", "-q"],
+    answer: 0,
+    explain: "--nodepsは依存関係のチェックを無視します。ファイルの衝突などを無視する場合は--forceを使います。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "apt-get downloadのように、実際にはインストールせずパッケージファイルだけを取得する操作の用途として適切なものはどれか。",
+    choices: [
+      "オフライン環境へ後で手動転送してインストールするため",
+      "パーミッションを変更するため",
+      "スワップ領域を作成するため",
+      "カーネルモジュールをロードするため"
+    ],
+    answer: 0,
+    explain: "パッケージファイルだけ取得しておけば、ネットワークにつながらない別のマシンへ転送してインストールする、といった使い方ができます。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "Debian系でパッケージの依存関係が壊れている場合に修復を試みるコマンドはどれか。",
+    choices: ["apt-get install -f", "apt-get clean", "apt-get autoremove", "apt-get update"],
+    answer: 0,
+    explain: "apt-get install -f(--fix-broken)は依存関係が壊れたパッケージ構成を修復しようと試みます。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "rpmパッケージの署名(GPG鍵)を検証するオプションはどれか。",
+    choices: ["--checksig", "--nodeps", "-e", "-U"],
+    answer: 0,
+    explain: "rpm --checksigはパッケージのGPG署名やチェックサムを検証し、改ざんの有無を確認します。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "Zypper(openSUSEなどで使われるパッケージ管理ツール)の基本的な役割として正しいものはどれか。",
+    choices: [
+      "RPMベースの高レベルパッケージ管理を行う",
+      "Debianパッケージの管理を行う",
+      "ソースコードのみを扱う",
+      "コンテナイメージ専用のツールである"
+    ],
+    answer: 0,
+    explain: "ZypperはRPMをベースとした高レベルパッケージ管理ツールで、依存関係の解決やリポジトリ管理を行います。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "ボリュームグループの空き容量を確認する際に使うLVM関連コマンドはどれか。",
+    choices: ["vgs", "lvs", "pvs", "vgs、lvs、pvsいずれも状況確認に使う"],
+    answer: 3,
+    explain: "vgs・lvs・pvsはそれぞれボリュームグループ、論理ボリューム、物理ボリュームの状態を簡潔な一覧形式で表示します。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "システムのインストール時に、スワップ用のパーティションを設ける主な目的はどれか。",
+    choices: [
+      "物理メモリが不足した際にディスクを補助記憶として使う",
+      "起動速度を必ず高速化する",
+      "パーティションの数を減らす",
+      "ネットワーク設定を保存する"
+    ],
+    answer: 0,
+    explain: "スワップ領域は物理メモリが不足した際に、一部のデータを一時的にディスクへ退避させるために使われます。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "yum/dnfでインストール済みパッケージのうち更新可能なものを一覧表示するサブコマンドはどれか。",
+    choices: ["check-update", "list installed", "info", "history"],
+    answer: 0,
+    explain: "yum check-update(dnf check-update)は現在インストールされているパッケージのうち、更新版が存在するものを一覧表示します。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "パッケージの操作履歴(インストールや削除の記録)を確認できるdnfのサブコマンドはどれか。",
+    choices: ["history", "repolist", "clean", "makecache"],
+    answer: 0,
+    explain: "dnf historyはこれまでのトランザクション(インストール・削除・更新)の履歴を表示し、undoで元に戻すことも可能です。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "パッケージ管理システムを介さずソースコードからインストールしたソフトウェアを、後から一括アンインストールする際に困ることとして適切なものはどれか。",
+    choices: [
+      "パッケージ管理システムに記録が残らず、関連ファイルの把握が難しい",
+      "必ずシステムが起動しなくなる",
+      "ネットワーク設定がすべて初期化される",
+      "スワップ領域が自動的に削除される"
+    ],
+    answer: 0,
+    explain: "make installなどでソースからインストールしたソフトウェアはパッケージ管理データベースに記録されないため、後からの管理やアンインストールが難しくなります。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "プロセスの実行優先度を示す値で、値が小さいほど優先度が高くなるものはどれか。",
+    choices: ["nice値", "PID", "UID", "シグナル番号"],
+    answer: 0,
+    explain: "nice値は-20から19までの範囲を取り、値が小さいほど優先度が高くなります。一般ユーザーは正の値(優先度を下げる方向)しか設定できません。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "実行中のプロセスのnice値を変更するコマンドはどれか。",
+    choices: ["renice", "nice", "chnice", "priority"],
+    answer: 0,
+    explain: "reniceは既に実行中のプロセスの優先度を変更します。起動時に優先度を指定する場合はniceコマンドを使います。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "拡張正規表現で「1文字以上の繰り返し」を表すメタ文字はどれか。",
+    choices: ["+", "*", "?", "."],
+    answer: 0,
+    explain: "+は直前の文字が1回以上繰り返されることを表します。*は0回以上、?は0回か1回、.は任意の1文字を表します。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "正規表現で行頭を表すメタ文字はどれか。",
+    choices: ["^", "$", "\\\\", "|"],
+    answer: 0,
+    explain: "^は行頭を表すメタ文字です。行末を表すのは$で、これらはgrepなどの検索条件でよく使われます。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "正規表現で行末を表すメタ文字はどれか。",
+    choices: ["$", "^", "*", "+"],
+    answer: 0,
+    explain: "$は行末を表すメタ文字です。「end$」のように指定すると、行末が「end」で終わる行にマッチします。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "viエディタでコマンドモードからテキスト入力モードに切り替える代表的なキーはどれか。",
+    choices: ["i", ":", "Esc", "/"],
+    answer: 0,
+    explain: "iキーでカーソル位置の前から入力モードに入ります。入力モードからコマンドモードに戻るにはEscキーを使います。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "viエディタで編集内容を保存して終了するコマンドはどれか。",
+    choices: [":wq", ":q!", ":e", "/pattern"],
+    answer: 0,
+    explain: ":wqは変更を保存(write)してから終了(quit)します。保存せずに強制終了する場合は:q!を使います。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "viエディタで文字列を検索するコマンドの書式はどれか。",
+    choices: ["/検索文字列", ":s/検索文字列", "i検索文字列", "dd検索文字列"],
+    answer: 0,
+    explain: "/に続けて文字列を入力すると、カーソル位置より下方向を検索します。上方向への検索は?を使います。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "現在設定されているシェル環境変数の一覧を表示するコマンドはどれか。",
+    choices: ["env", "set", "envもsetも表示できる(範囲が異なる)", "export"],
+    answer: 2,
+    explain: "envはプロセスに引き継がれる環境変数のみを表示し、setはシェル変数も含めた全ての変数を表示します。範囲が異なる点に注意が必要です。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "シェル変数を環境変数として子プロセスに引き継がせるコマンドはどれか。",
+    choices: ["export", "set", "unset", "env"],
+    answer: 0,
+    explain: "exportを付けて宣言した変数は環境変数となり、その後起動する子プロセスにも引き継がれます。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "設定した環境変数を削除するコマンドはどれか。",
+    choices: ["unset", "export", "env -u", "rm"],
+    answer: 0,
+    explain: "unset 変数名で、設定済みの環境変数やシェル変数を削除できます。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "複数行にわたる入力をコマンドの標準入力として渡す「ヒアドキュメント」の開始記法はどれか。",
+    choices: ["<<", "<", ">>", "|"],
+    answer: 0,
+    explain: "<<デリミタで開始し、同じデリミタが現れるまでの複数行を標準入力として渡すのがヒアドキュメントです。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "1行の文字列をそのまま標準入力として渡す「ヒア文字列」の記法はどれか。",
+    choices: ["<<<", "<<", "<", "|"],
+    answer: 0,
+    explain: "<<<文字列という形式で、1行分の文字列をそのままコマンドの標準入力として渡せます。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "コマンドの実行結果を別のコマンドの引数として直接埋め込む「コマンド置換」の記法はどれか。",
+    choices: ["$(コマンド)", "${変数}", "$[コマンド]", "%(コマンド)"],
+    answer: 0,
+    explain: "$(コマンド)またはバッククォートで囲むことで、コマンドの実行結果をその場に展開できます(コマンド置換)。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "バックグラウンドで実行されているジョブの一覧を表示するコマンドはどれか。",
+    choices: ["jobs", "ps", "top", "bg"],
+    answer: 0,
+    explain: "jobsは現在のシェルで管理しているバックグラウンド・停止中のジョブ一覧を表示します。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "実行中のコマンドを一時停止させるキー操作はどれか。",
+    choices: ["Ctrl+Z", "Ctrl+C", "Ctrl+D", "Ctrl+A"],
+    answer: 0,
+    explain: "Ctrl+Zはフォアグラウンドのプロセスを一時停止(サスペンド)し、シェルの操作に戻ります。再開するにはfgやbgを使います。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "実行中のプロセスを強制終了するキー操作はどれか。",
+    choices: ["Ctrl+C", "Ctrl+Z", "Ctrl+D", "Ctrl+S"],
+    answer: 0,
+    explain: "Ctrl+CはフォアグラウンドのプロセスにSIGINTを送り、多くの場合プロセスを終了させます。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "sedで文字列を置換する基本的な書式はどれか。",
+    choices: ["sed 's/検索/置換/' file", "sed 'p/検索/置換/' file", "sed 'd/検索/置換/' file", "sed 'g/検索/置換/' file"],
+    answer: 0,
+    explain: "sed 's/検索文字列/置換文字列/'が基本の置換書式です。行末にgを付けると行内の全マッチを置換します。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "grepで大文字小文字を区別せずに検索するオプションはどれか。",
+    choices: ["-i", "-v", "-c", "-n"],
+    answer: 0,
+    explain: "grep -iは大文字・小文字を区別せずにパターンマッチングを行います。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "grepでマッチした行の行番号も一緒に表示するオプションはどれか。",
+    choices: ["-n", "-i", "-v", "-l"],
+    answer: 0,
+    explain: "grep -nはマッチした行の行番号を一緒に表示します。複数ファイル検索時に-lを使うとファイル名のみ表示されます。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "findコマンドで、見つけたファイルに対して直接コマンドを実行するオプションはどれか。",
+    choices: ["-exec", "-name", "-type", "-size"],
+    answer: 0,
+    explain: "find . -exec コマンド {} \\; のように書くことで、見つけたファイルそれぞれに対してコマンドを実行できます。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "パーティションを作成する際、GPT形式のディスクを操作できるコマンドはどれか。",
+    choices: ["gdisk", "fdisk(バージョンによりGPT対応)", "gdiskとfdiskの両方が使われる", "mkfsのみ"],
+    answer: 2,
+    explain: "GPTディスクの操作にはgdiskが伝統的に使われますが、近年のfdiskもGPTに対応しています。試験ではどちらも扱われることを押さえておく必要があります。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "XFSファイルシステムを新規作成するコマンドはどれか。",
+    choices: ["mkfs.xfs", "mkfs.ext4", "mkswap", "tune2fs"],
+    answer: 0,
+    explain: "mkfs.xfs(またはmkfs -t xfs)でXFS形式のファイルシステムを作成します。ext4系はmkfs.ext4を使います。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "Btrfsファイルシステムの特徴として正しいものはどれか。",
+    choices: [
+      "スナップショットやサブボリュームなどの高度な機能を持つ",
+      "ジャーナリング機能を一切持たない",
+      "Windows専用のファイルシステムである",
+      "パーティション分割ができない"
+    ],
+    answer: 0,
+    explain: "Btrfsはスナップショット、サブボリューム、内蔵のボリューム管理など、ext系にはない高度な機能を持つ次世代ファイルシステムです。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "ext2からext3への主な変更点として正しいものはどれか。",
+    choices: [
+      "ジャーナリング機能が追加された",
+      "パーミッション機能が追加された",
+      "最大ファイルサイズの制限が撤廃された",
+      "GPTのみに対応するようになった"
+    ],
+    answer: 0,
+    explain: "ext3はext2にジャーナリング機能を追加したもので、不正終了時の復旧が速くなりました。ext4ではさらに拡張エクステントなどが追加されています。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "ファイルシステムをマウントする際、読み取り専用でマウントするオプションはどれか。",
+    choices: ["-o ro", "-o rw", "-t", "-a"],
+    answer: 0,
+    explain: "mount -o roで読み取り専用マウントになります。読み書き両方を許可する場合は-o rwを指定(省略時のデフォルトの場合が多い)します。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "CD-ROMやDVDなどで使われる光学メディア用のファイルシステムはどれか。",
+    choices: ["ISO 9660", "ext4", "XFS", "Btrfs"],
+    answer: 0,
+    explain: "ISO 9660はCD-ROMなどの光学メディアで標準的に使われるファイルシステム規格です。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "ユーザーのホームディレクトリのデフォルトパーミッションに影響する設定はどれか。",
+    choices: ["umask", "chmod", "chown", "quota"],
+    answer: 0,
+    explain: "umaskの値によって、新規作成されるファイルやディレクトリのデフォルトパーミッションから除外されるビットが決まります。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "ファイルの所有グループを変更するコマンドはどれか。",
+    choices: ["chgrp", "chown", "chmod", "usermod"],
+    answer: 0,
+    explain: "chgrpはファイルの所有グループを変更します。chownでも「chown :グループ名」の形式でグループ変更が可能です。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "SGID(Set Group ID)がディレクトリに設定された場合の効果として正しいものはどれか。",
+    choices: [
+      "そのディレクトリ内に作成されたファイルの所有グループが親ディレクトリと同じになる",
+      "ファイルの削除が誰にもできなくなる",
+      "実行ファイルが所有者権限で動作するようになる",
+      "パーミッションが自動的に777になる"
+    ],
+    answer: 0,
+    explain: "ディレクトリにSGIDを設定すると、その中に作成されるファイルやサブディレクトリの所有グループが、親ディレクトリの所有グループを継承します。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "FHS(ファイルシステム階層標準)で、可変データ(ログやメール、キャッシュなど)を格納するディレクトリはどれか。",
+    choices: ["/var", "/usr", "/opt", "/srv"],
+    answer: 0,
+    explain: "/varは頻繁に内容が変化する可変データ(ログ、メールスプール、キャッシュなど)を格納するためのディレクトリです。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "FHSで、システム管理者用のコマンドやバイナリが格納されるディレクトリはどれか。",
+    choices: ["/sbin", "/bin", "/lib", "/opt"],
+    answer: 0,
+    explain: "/sbinには主にroot権限で使うシステム管理用のコマンドが格納されます。一般ユーザー向けのコマンドは/binに格納されます。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "FHSで、サードパーティ製のアドオンアプリケーションソフトウェアを格納するディレクトリはどれか。",
+    choices: ["/opt", "/var", "/proc", "/dev"],
+    answer: 0,
+    explain: "/optはパッケージ管理システムの外で提供される、追加のアプリケーションソフトウェアパッケージを格納する場所です。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "FHSで、システムが提供するサービス用のデータ(Webサーバーの公開データなど)を格納するディレクトリはどれか。",
+    choices: ["/srv", "/var", "/opt", "/mnt"],
+    answer: 0,
+    explain: "/srvはWebサーバーやFTPサーバーなど、システムが提供するサービス関連のデータを格納するためのディレクトリです。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "取り外し可能なメディア(USBメモリなど)を一時的にマウントする標準的な場所はどれか。",
+    choices: ["/media", "/mnt", "/tmp", "/var"],
+    answer: 0,
+    explain: "/mediaはリムーバブルメディアの自動マウント用に使われることが多く、/mntは管理者が手動で一時的にマウントする際によく使われます。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "ファイルシステムの断片化状況やブロックサイズなど、詳細情報を表示するコマンドはどれか。",
+    choices: ["dumpe2fs", "df", "du", "mount"],
+    answer: 0,
+    explain: "dumpe2fsはext系ファイルシステムのスーパーブロック情報やブロックグループの詳細を表示します。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "ユーザーごとのディスク使用量の制限値を設定するコマンドはどれか。",
+    choices: ["edquota", "repquota", "quotacheck", "quotaon"],
+    answer: 0,
+    explain: "edquotaは対話的にユーザーやグループのディスク使用量の制限値を編集します。repquotaは使用状況の確認、quotaonはクォータ機能自体の有効化に使います。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "クォータ機能を利用する前に、ディスク使用量の集計データベースを初期作成するコマンドはどれか。",
+    choices: ["quotacheck", "edquota", "quotaon", "repquota"],
+    answer: 0,
+    explain: "quotacheckはファイルシステムをスキャンして、クォータ管理用の使用量データベースを作成・更新します。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "シンボリックリンクを作成するコマンドの書式として正しいものはどれか。",
+    choices: ["ln -s 元ファイル リンク名", "ln 元ファイル リンク名", "cp -s 元ファイル リンク名", "mv -s 元ファイル リンク名"],
+    answer: 0,
+    explain: "ln -sでシンボリックリンクを作成します。-sを付けない場合はハードリンクが作成されます。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "リンク先の実体パスをたどって表示するコマンドはどれか。",
+    choices: ["readlink", "ln", "stat", "file"],
+    answer: 0,
+    explain: "readlinkはシンボリックリンクが指す実際のパスを表示します。-fオプションで多段階のリンクも最終的な実パスまでたどれます。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "ファイルシステムを安全に取り外す前に、ディスクキャッシュの内容を書き出す(同期する)コマンドはどれか。",
+    choices: ["sync", "umount", "mount", "fsck"],
+    answer: 0,
+    explain: "syncはメモリ上のディスクキャッシュ(バッファ)を実際のディスクへ書き出します。アンマウント前に実行されることがあります。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "FHSで、システムの起動に必要な最小限のプログラムやライブラリを格納するディレクトリはどれか。",
+    choices: ["/bin と /lib", "/opt", "/srv", "/var"],
+    answer: 0,
+    explain: "/binと/libには、システム起動やシングルユーザーモードで必要となる最小限のコマンドと共有ライブラリが格納されます。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "ハードディスクのI/O統計情報(読み書きの回数や待ち時間など)を確認できるコマンドはどれか。",
+    choices: ["iostat", "df", "du", "mount"],
+    answer: 0,
+    explain: "iostatはCPU使用率とあわせて、各デバイスのI/O統計情報を表示します。ディスクの性能診断に使われます。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "ファイルシステムの空きinode数を確認する際に使うコマンドのオプションはどれか。",
+    choices: ["df -i", "df -h", "du -h", "df -T"],
+    answer: 0,
+    explain: "df -iはファイルシステムごとのinodeの総数・使用数・空き数を表示します。inodeが枯渇するとディスク容量に余裕があってもファイルを作成できなくなります。"
+  }
+];
+
+const NEW_QUESTIONS = [
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "PCIバスに接続されたハードウェアの情報を確認するために使用するコマンドとして、正しいものを1つ選択してください。",
+    choices: ["lsusb", "lspci", "lsmod", "lscpu"],
+    answer: 1,
+    explain: "lspci コマンドは、PCIバスに接続されているすべてのデバイス情報を表示します。lsusb はUSBデバイス、lsmod はロード済みのカーネルモジュール、lscpu はCPUのアーキテクチャ情報を確認するコマンドです。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "カーネルモジュールの依存関係を考慮して、特定のモジュールを自動的に関連モジュールとともにアンロードするコマンドとして、正しいものを1つ選択してください。",
+    choices: ["rmmod -a <モジュール名>", "modprobe -r <モジュール名>", "lsmod -d <モジュール名>", "insmod -r <モジュール名>"],
+    answer: 1,
+    explain: "modprobe コマンドに -r オプションを付けると、指定したモジュールとその依存関係にある不要なモジュールを安全にアンロードできます。rmmod や insmod は依存関係を自動処理しません。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "現在ロードされているカーネルモジュールの一覧と、それらの使用状況や占有メモリサイズを表示するコマンドとして適切なものを1つ選択してください。",
+    choices: ["modinfo", "insmod", "lsmod", "modprobe"],
+    answer: 2,
+    explain: "lsmod コマンドは、/proc/modules の内容を参照し、現在ロードされているカーネルモジュール一覧(モジュール名、サイズ、使用元など)を表示します。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "特定カーネルモジュールのパラメータ詳細や作成者、ライセンス情報などを確認するためのコマンドとして正しいものを1つ選択してください。",
+    choices: ["lsmod -v <モジュール名>", "modinfo <モジュール名>", "modprobe -i <モジュール名>", "lspci -k <モジュール名>"],
+    answer: 1,
+    explain: "modinfo コマンドは指定したカーネルモジュールファイルの記述、作成者、ライセンス、設定可能なパラメータ一覧を表示します。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "特定のカーネルモジュールのロードを自動的に禁止(ブラックリスト化)するために、設定ファイルを配置すべき一般的なディレクトリとして正しいものを1つ選択してください。",
+    choices: ["/etc/modprobe.d/", "/lib/modules/blacklist/", "/etc/sysconfig/modules/", "/etc/kernel/blacklist/"],
+    answer: 0,
+    explain: "/etc/modprobe.d/ ディレクトリ内の .conf ファイル(例: blacklist.conf)に「blacklist <モジュール名>」と記述することで、モジュールの自動ロードを禁止できます。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "Linuxにおいて、接続された物理ストレージやプロセスなどのハードウェア情報をカーネルがメモリ上に動的に生成して提供する擬似ファイルシステムとして正しい組み合わせを1つ選択してください。",
+    choices: ["/etc, /var", "/proc, /sys", "/dev, /usr", "/tmp, /mnt"],
+    answer: 1,
+    explain: "/proc や /sys はメモリ上に構築される擬似ファイルシステム(procfs, sysfs)であり、実行中のカーネル情報や接続デバイス情報をファイル形式で参照できるようにします。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "カーネルが認識しているCPUに関する詳細情報(プロセッサのモデル、コア数、キャッシュサイズなど)を確認するために参照する適切な擬似ファイルとして、正しいものを選択してください。",
+    choices: ["/proc/interrupts", "/proc/cpuinfo", "/sys/kernel/cpu", "/dev/cpuinfo"],
+    answer: 1,
+    explain: "/proc/cpuinfo にはCPUの詳細情報が格納されています。/proc/interrupts はIRQ割込み情報、/proc/dma はDMAチャネル情報です。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "カーネルがホットプラグおよびコールドプラグデバイスを検出し、/dev ディレクトリ下に動的にデバイスファイルを生成・管理する仕組み(サブシステム)として正しいものを1つ選択してください。",
+    choices: ["dbus", "udev", "sysvinit", "hald"],
+    answer: 1,
+    explain: "udev はカーネルからのハードウェアイベント(uevent)を受け取り、/etc/udev/rules.d/ などのルールに従って /dev 配下にデバイスファイルを動的に生成します。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "x86系システムにおける伝統的なMBR(Master Boot Record)形式のパーティションテーブルにおいて、MBR全体のサイズおよびブートストラップコード領域のサイズとして正しい組み合わせを選択してください。",
+    choices: ["MBR全体: 512バイト / ブートストラップ領域: 440バイト", "MBR全体: 1024バイト / ブートストラップ領域: 512バイト", "MBR全体: 4096バイト / ブートストラップ領域: 2048バイト", "MBR全体: 2048バイト / ブートストラップ領域: 440バイト"],
+    answer: 0,
+    explain: "MBRの全サイズは512バイトです。そのうち最初の440バイトがブートストラップコード(ブートローダの第1ステージ)、次の64バイトがパーティションテーブル(16バイト×4)、最後の2バイトがブートサイン(0xAA55)です。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "UEFIアーキテクチャ搭載システムにおいて、ブートローダやEFIアプリケーションが配置される専用のファイルシステムとして標準的に使用されるものを1つ選択してください。",
+    choices: ["ext4", "xfs", "FAT32", "btrfs"],
+    answer: 2,
+    explain: "UEFI規格では、EFI System Partition (ESP) に使用するファイルシステムとして標準的に FAT (FAT12/16/32) が要求されます。一般的な環境では FAT32 が使用されます。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "システムの起動時、GRUB2などのブートローダからカーネルに渡すパラメータとして「init=/bin/bash」を指定した場合の動作として正しいものを選択してください。",
+    choices: [
+      "カーネル初期化後、通常のinit/systemdを介さず直ちにBashシェルがルート権限で起動する。",
+      "Bashシェルの構文チェックを行った後、通常の起動シーケンスを続行する。",
+      "シングルユーザーモード(ランレベル1)でシステムが再起動する。",
+      "initプロセスがBashスクリプトを順次読み込んでマルチユーザーモードへ移行する。"
+    ],
+    answer: 0,
+    explain: "「init=/bin/bash」パラメータを指定すると、カーネルはPID 1として通常のシステム管理プロセス(systemdやinit)ではなく /bin/bash を直接呼び出すため、パスワード入力なしで緊急修復用シェルが立ち上がります。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "ブート時にルートファイルシステムを一時的に読み取り専用(read-only)でマウントするようにカーネルへ指示するカーネルパラメータとして正しいものを選択してください。",
+    choices: ["rw", "ro", "rootflags=ro", "quiet"],
+    answer: 1,
+    explain: "「ro」パラメータは起動時のルートファイルシステムを読み取り専用でマウントします。ファイルシステムチェック(fsck)等を安全に行うために最初roでマウントされ、その後rwで再マウントされるのが一般的です。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "起動時に実ルートファイルシステムをマウントする前に、必要なストレージドライバやモジュールを読み込むために作成される初期RAMディスクイメージの名称として正しいものを選択してください。",
+    choices: ["initramfs (または initrd)", "vmlinuz", "boot.img", "grub.cfg"],
+    answer: 0,
+    explain: "initramfs (initial RAM filesystem) は、カーネルがルートファイルシステムにアクセスするために必要なドライバやスクリプトを含む一時的なファイルシステムです。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "カーネル・リング・バッファに記憶されているメッセージ(起動時の検出ログ等)を出力するためのコマンドとして最も適切なものを選択してください。",
+    choices: ["journalctl -u kernel", "dmesg", "cat /var/log/kernel", "sysctl -a"],
+    answer: 1,
+    explain: "dmesg コマンドはカーネル・リング・バッファのメッセージを表示します。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "systemdを採用しているシステムで、前回の起動時(1つ前のブート)のログメッセージを確認するために使用する journalctl コマンドの適切な実行例を選択してください。",
+    choices: ["journalctl -b -1", "journalctl --last", "journalctl -u boot-1", "journalctl -p prev"],
+    answer: 0,
+    explain: "「journalctl -b -1」(または「--boot=-1」)を指定すると、現在の1つ前の起動セッションのログを出力します。「-b 0」は現在のブートログです。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "SysVinitにおいて、グラフィカルログイン環境(GUI)を提供する一般的なランレベル番号として正しいものを選択してください。",
+    choices: ["ランレベル 1", "ランレベル 3", "ランレベル 5", "ランレベル 6"],
+    answer: 2,
+    explain: "標準的なSysVinitでは、ランレベル3がマルチユーザー(テキストモード)、ランレベル5がマルチユーザー(グラフィカルモード/GUI)、ランレベル1がシングルユーザーモード、ランレベル0がシャットダウン、ランレベル6が再起動です。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "SysVinitシステムにおける設定ファイル「/etc/inittab」内で、デフォルトのランレベルを「3」に設定するための適切な記述を選択してください。",
+    choices: ["id:3:initdefault:", "default:3:runlevel:", "init:3:default:", "set:3:default:"],
+    answer: 0,
+    explain: "/etc/inittab のデフォルトランレベル設定は「id:runlevel:action:process」の形式をとり、「id:3:initdefault:」と記述します。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "systemd環境において、SysVinitの「ランレベル3(テキストモードのマルチユーザー環境)」に相当するターゲットユニット名として正しいものを選択してください。",
+    choices: ["graphical.target", "multi-user.target", "rescue.target", "reboot.target"],
+    answer: 1,
+    explain: "systemdでは、ランレベル3に相当するのが「multi-user.target」、ランレベル5に相当するのが「graphical.target」、ランレベル1に相当するのが「rescue.target」です。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "systemdにおいて、現在稼働中のターゲットを即座に「multi-user.target」へ切り替えるために使用するコマンドとして正しいものを選択してください。",
+    choices: ["systemctl set-default multi-user.target", "systemctl isolate multi-user.target", "systemctl switch multi-user.target", "systemctl enable multi-user.target"],
+    answer: 1,
+    explain: "「systemctl isolate <ターゲット名>」コマンドは、指定したターゲットへ即座にシステム状態を遷移(切り替え)させます。「set-default」は次回起動時のデフォルトを変更するコマンドです。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "ログイン中の全ユーザーの端末画面に対して、システムメンテナンスやシャットダウン等の告知メッセージを送信するためのコマンドとして正しいものを選択してください。",
+    choices: ["writeall", "wall", "echo -a", "mesg -y"],
+    answer: 1,
+    explain: "wall (write all) コマンドは、現在システムにログインしているすべてのユーザーの端末にメッセージをブロードキャスト送信します。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "Linuxシステムのディスクレイアウト設計において、可変データ(ログファイルやメールキュー、データベースなど)が急速に増加してルートパーティションを圧迫するのを防ぐために、独立したパーティションに分割することが最も推奨されるディレクトリを選択してください。",
+    choices: ["/etc", "/bin", "/var", "/lib"],
+    answer: 2,
+    explain: "/var ディレクトリにはログファイル(/var/log)やスプール(/var/spool)などサイズが変動するデータが格納されるため、独立したパーティションに分けることでルート(/)の容量枯渇を防ぎます。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "GRUB 2のメイン設定ファイル「/boot/grub/grub.cfg」(ディストリビューションによっては「/boot/grub2/grub.cfg」)を再生成・自動更新するために使用するコマンドとして適切なものを選択してください。",
+    choices: ["grub-install", "grub-mkconfig -o /boot/grub/grub.cfg", "grub-update --generate", "grub-config -w"],
+    answer: 1,
+    explain: "GRUB 2では「/etc/default/grub」や「/etc/grub.d/」内のスクリプトをもとに「grub-mkconfig -o <出力ファイルパス>」を実行して grub.cfg を更新します。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "特定の実行可能バイナリファイル(例: /bin/bash)が依存している共有ライブラリ(.soファイル)の一覧を表示するコマンドとして正しいものを選択してください。",
+    choices: ["ldconfig", "ldd", "ls-so", "libcheck"],
+    answer: 1,
+    explain: "ldd コマンドは、指定したプログラムを実行するために必要な共有ライブラリとそのマッピングパスを表示します。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "共有ライブラリのキャッシュファイル(/etc/ld.so.cache)を更新し、新しいライブラリパスをシステムに認識させるために実行するコマンドを選択してください。",
+    choices: ["ldd -u", "ldconfig", "ldpath -r", "modprobe -l"],
+    answer: 1,
+    explain: "ldconfig コマンドは /etc/ld.so.conf および /etc/ld.so.conf.d/ 以下の設定を参照し、共有ライブラリのリンクおよびキャッシュ /etc/ld.so.cache を最新状態に更新します。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "環境変数を用いて、標準以外のディレクトリにある共有ライブラリを優先的に一時読み込みさせたい場合に指定する環境変数名として正しいものを選択してください。",
+    choices: ["SHARE_LIBRARY_PATH", "LD_LIBRARY_PATH", "SO_SEARCH_PATH", "LIB_DEFAULT_PATH"],
+    answer: 1,
+    explain: "LD_LIBRARY_PATH 環境変数にディレクトリパスを指定すると、プログラム実行時に指定したパスから共有ライブラリが優先的に検索されます。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "Debianパッケージ管理ツール dpkg を使用して、インストール済みのすべてのパッケージ一覧を表示するコマンドとして正しいものを選択してください。",
+    choices: ["dpkg -i", "dpkg -l", "dpkg -L", "dpkg -s"],
+    answer: 1,
+    explain: "「dpkg -l」(list) はインストールされているパッケージの一覧を出力します。「dpkg -L」は指定パッケージからインストールされたファイル一覧、「dpkg -i」はインストールです。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "Debian系システム(APT)において、特定のファイル(例: /etc/vim/vimrc)がどのDebianパッケージによって提供されたかを検索する dpkg コマンドのオプションを選択してください。",
+    choices: ["dpkg -S /etc/vim/vimrc", "dpkg -f /etc/vim/vimrc", "dpkg -p /etc/vim/vimrc", "dpkg -q /etc/vim/vimrc"],
+    answer: 0,
+    explain: "「dpkg -S」(search) オプションは指定したファイルがどのパッケージに所属しているか(検索)を表示します。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "Debian系システムで、パッケージリポジトリの情報(取得先URLなど)が記述されているメインの設定ファイルとして正しいものを選択してください。",
+    choices: ["/etc/apt/apt.conf", "/etc/apt/sources.list", "/etc/dpkg/dpkg.cfg", "/etc/apt/repositories.conf"],
+    answer: 1,
+    explain: "APTのリポジトリ設定は /etc/apt/sources.list および /etc/apt/sources.list.d/ 内の .list ファイルに記述します。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "APTコマンドを用いて、ローカルのパッケージキャッシュ情報を最新のリポジトリ情報と同期(更新)させるためのコマンドを選択してください。",
+    choices: ["apt upgrade", "apt update", "apt sync", "apt refresh"],
+    answer: 1,
+    explain: "「apt update」(または「apt-get update」)はリポジトリのインデックス情報を更新します。実際にパッケージを更新するのは「apt upgrade」です。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "RPMパッケージマネージャー (rpm) を使用して、指定したパッケージファイル (package.rpm) を詳細メッセージ表示および進捗バー付きで新規インストールする適切なコマンドを選択してください。",
+    choices: ["rpm -ivh package.rpm", "rpm -Uvh package.rpm", "rpm -qpl package.rpm", "rpm -e package.rpm"],
+    answer: 0,
+    explain: "「rpm -i」はインストール、「-v」は詳細表示(verbose)、「-h」はハッシュマーク(#)による進捗表示です。更新インストールは「-U」を使用します。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "すでにシステムにインストールされている特定のRPMパッケージ(例: httpd)に含まれるファイル一覧を表示するための rpm コマンドとして正しいものを選択してください。",
+    choices: ["rpm -qf httpd", "rpm -ql httpd", "rpm -qa httpd", "rpm -qp httpd"],
+    answer: 1,
+    explain: "「rpm -ql <パッケージ名>」(query list) は指定したインストール済みパッケージのファイル一覧を表示します。「-qa」は全パッケージ一覧、「-qf」は指定ファイルが属するパッケージの特定です。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "まだインストールされていない未インストールのRPMパッケージファイル (sample.rpm) に含まれるファイル一覧を確認するための適切な rpm コマンドを選択してください。",
+    choices: ["rpm -ql sample.rpm", "rpm -qpl sample.rpm", "rpm -qf sample.rpm", "rpm -qip sample.rpm"],
+    answer: 1,
+    explain: "未インストールのパッケージファイルに対してクエリを行う場合は「-p」(package file) オプションを組み合わせます。「rpm -qpl sample.rpm」でファイル一覧を表示します。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "Red Hat系ディストリビューション(RHEL/CentOS/Fedora等)において、YUMまたはDNFを使用して特定コマンド(例: ifconfig)を提供するパッケージを検索する正しいコマンドを選択してください。",
+    choices: ["yum search-file ifconfig", "yum provides ifconfig (または yum whatprovides ifconfig)", "yum find ifconfig", "yum contains ifconfig"],
+    answer: 1,
+    explain: "「yum provides <ファイルパス/コマンド名>」または「dnf provides」は、指定したファイルや機能を提供するパッケージを検索・特定します。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "openSUSEやSUSE Linux Enterpriseで使用されている標準のパッケージ管理コマンドラインツールとして正しいものを選択してください。",
+    choices: ["pacman", "zypper", "dnf", "emerge"],
+    answer: 1,
+    explain: "SUSE系ディストリビューションでは zypper が標準のパッケージ管理コマンドです。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "ハイパーバイザー(Virtual Machine Monitor)の分類において、ホストオペレーティングシステムを必要とせず、物理ハードウェア上で直接動作する「Type 1(ベアメタル型)」に該当するものを1つ選択してください。",
+    choices: ["Oracle VirtualBox", "VMware Workstation", "VMware ESXi", "QEMU (スタンドアロン動作時)"],
+    answer: 2,
+    explain: "VMware ESXiやXen、Hyper-Vなどは物理ハードウェア上で直接動作するType 1(ベアメタル型)ハイパーバイザーです。VirtualBoxやVMware WorkstationはType 2(ホスト型)です。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "Linuxカーネルを直接ハイパーバイザーとして機能させ、ハードウェア支援仮想化(Intel VT / AMD-V)を利用して仮想マシンを実行可能にするカーネルモジュール/技術として正しいものを選択してください。",
+    choices: ["Xen", "KVM (Kernel-based Virtual Machine)", "LXC", "OpenVZ"],
+    answer: 1,
+    explain: "KVM (Kernel-based Virtual Machine) はLinuxカーネルに組み込まれた仮想化モジュールであり、LinuxをType 1と同等のハイパーバイザーに変換します。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "コンテナ型仮想化(DockerやLXCなど)が従来のハイパーバイザー型仮想化(VMwareやKVMなど)と大きく異なる特徴として正しいものを選択してください。",
+    choices: [
+      "コンテナごとに独立したカーネルが個別に起動・実行される。",
+      "ホストOSのカーネルをすべてのコンテナで共有し、プロセスレベルで分離管理する。",
+      "ハードウェアのエミュレーションを完全にソフトウェアで行うため動作が極めて重い。",
+      "コンテナを実行するには必ず専用のBIOS/UEFIファームウェア設定が必要である。"
+    ],
+    answer: 1,
+    explain: "コンテナ技術はホストOSのカーネルを共有し、カーネルの機能(namespacesやcgroups)を用いて分離空間を実現するため、軽量かつ高速に動作します。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "クラウド環境(AWSやOpenStackなど)において、仮想マシン(インスタンス)の初回起動時にホスト名、SSH公開鍵、初期ユーザー設定などを自動的にカスタマイズ・設定する標準的なユーティリティを選択してください。",
+    choices: ["cloud-init", "sysprep", "init-cloud", "virt-install"],
+    answer: 0,
+    explain: "cloud-init は多くのLinuxディストリビューションで利用されている、クラウドインスタンスの初期化・自動設定ツールです。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "YUMまたはDNFにおいて、インストール済みの指定パッケージ(例: httpd)を依存関係を含めて削除するための正しいコマンドを選択してください。",
+    choices: ["yum erase httpd (または yum remove httpd)", "yum purge httpd", "yum delete httpd", "yum uninstall httpd"],
+    answer: 0,
+    explain: "YUM/DNFにおいてパッケージを削除するには remove または erase サブコマンドを使用します。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "Debian/Ubuntu系システムにおいて、指定したパッケージをその設定ファイルも含めて完全に削除する apt / apt-get のサブコマンドとして正しいものを選択してください。",
+    choices: ["apt remove <パッケージ名>", "apt purge <パッケージ名>", "apt clean <パッケージ名>", "apt autoremove --all <パッケージ名>"],
+    answer: 1,
+    explain: "「apt remove」はパッケージ本体のみを削除し設定ファイルを残します。「apt purge」は設定ファイルも含めて完全に削除(消去)します。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "現在使用しているLinuxシステムのカーネル名、ホスト名、カーネルバージョン、プロセッサアーキテクチャなどのシステム情報を一括表示するコマンドとして正しいものを選択してください。",
+    choices: ["sysinfo", "uname -a", "kernelinfo", "os-release"],
+    answer: 1,
+    explain: "「uname -a」コマンドはカーネルのバージョンやシステムアーキテクチャ等のシステム詳細情報を表示します。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "Bashシェルにおいて、新規に作成した変数 MY_VAR=\"Linux\" を、子プロセス(サブシェル)へも引き継ぐ「環境変数」としてエクスポートするための適切なコマンドを選択してください。",
+    choices: ["export MY_VAR", "env MY_VAR", "set -x MY_VAR", "declare -l MY_VAR"],
+    answer: 0,
+    explain: "export コマンドを使用することで、シェル変数を環境変数に昇格させ、子プロセスへ引き継ぐことができます。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "Bashにおいて、シングルクォーテーション(' ')とダブルクォーテーション(\" \")の違いに関する記述として正しいものを選択してください。",
+    choices: [
+      "シングルクォーテーション内では、変数展開($VAR)やコマンド置換が行われない。",
+      "ダブルクォーテーション内では、すべての特殊文字がリテラル(単なる文字)として扱われる。",
+      "シングルクォーテーション内でのみ、バッククォーテーションによるコマンド置換が可能である。",
+      "両者に機能上の違いは全くない。"
+    ],
+    answer: 0,
+    explain: "シングルクォーテーション内ではすべての文字が文字列リテラルとして評価され、変数の展開($VAR)などは行われません。ダブルクォーテーション内では $, `, \\ などの特殊文字が評価されます。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "テキストファイル file.txt の内容のうち、先頭から15行分だけを標準出力に出力するコマンドとして正しいものを選択してください。",
+    choices: ["head -n 15 file.txt", "tail -n 15 file.txt", "cut -l 15 file.txt", "top -n 15 file.txt"],
+    answer: 0,
+    explain: "「head -n 15」は指定ファイルの先頭15行を表示します。末尾を表示するのは tail です。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "カンマ区切りのCSVファイル data.csv から、第2フィールド(2列目)のみを切り出して出力する最適なコマンドを選択してください。",
+    choices: ["cut -d ',' -f 2 data.csv", "paste -d ',' -f 2 data.csv", "split -c 2 data.csv", "tr ',' -f 2 data.csv"],
+    answer: 0,
+    explain: "cut コマンドの -d オプションで区切り文字(デリミタ)を指定し、-f オプションで取り出すフィールド番号を指定します。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "テキストファイル内の連続する「重複行」を1行にまとめ(除外)して出力するコマンドとして正しいものを選択してください。なお、このコマンドは直前でソートされている必要があります。",
+    choices: ["sort -u", "uniq", "squeeze", "join"],
+    answer: 1,
+    explain: "uniq コマンドは隣接(連続)する重複行を排除します。通常は事前に sort コマンドで並び替えてからパイプで渡します。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "標準入力から受け取った文字列の「小文字を大文字に変換」して出力する tr コマンドの適切な実行例を選択してください。",
+    choices: ["tr 'a-z' 'A-Z'", "tr --upper", "tr 'lower' 'upper'", "tr -u 'a-z'"],
+    answer: 0,
+    explain: "「tr 'a-z' 'A-Z'」は、標準入力の小文字(a〜z)に対応する大文字(A〜Z)へ置換して出力します。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "指定したディレクトリ /data およびその配下のサブディレクトリとファイルを再帰的に消去するコマンドとして正しいものを選択してください。",
+    choices: ["rm -r /data (または rm -rf /data)", "rmdir --recursive /data", "delete -all /data", "erase -r /data"],
+    answer: 0,
+    explain: "ディレクトリとその中身を再帰的に削除するには rm -r (または -R, -rf) を使用します。rmdir は空のディレクトリのみ削除可能です。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "tar コマンドを使用して、/var/log ディレクトリの内容を gzip 形式で圧縮したアーカイブファイル log.tar.gz を作成する適切なオプションの組み合わせを選択してください。",
+    choices: ["tar -cvzf log.tar.gz /var/log", "tar -xvzf log.tar.gz /var/log", "tar -tvzf log.tar.gz /var/log", "tar -cjvf log.tar.gz /var/log"],
+    answer: 0,
+    explain: "-c (create: 作成), -v (verbose: 詳細表示), -z (gzip圧縮), -f (filename: ファイル名指定) を組み合わせて tar -cvzf とします。bzip2圧縮の場合は -j、xz圧縮の場合は -J を使用します。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "あるコマンドの標準出力を、画面(標準出力)に表示させると同時に、指定したファイル output.txt にも保存(分岐)させるためのコマンドを選択してください。",
+    choices: ["pipe", "tee", "split", "double"],
+    answer: 1,
+    explain: "tee コマンドは標準入力を受け取り、それを標準出力に出力すると同時にファイルにも書き込みます。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "コマンドの標準エラー出力(stderr, ファイルディスクリプタ2)を、標準出力(stdout, ファイルディスクリプタ1)と同じ出力先にリダイレクトするための適切なシェル記述を選択してください。",
+    choices: ["2>&1", "1>&2", "2>1", "&2>1"],
+    answer: 0,
+    explain: "「2>&1」はファイルディスクリプタ2(標準エラー出力)をファイルディスクリプタ1(標準出力)の出力先へ合流・リダイレクトさせます。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "標準入力から渡された複数の文字列(例: ファイル名のリスト)を引数として受け取り、別のコマンド(例: rm)に渡して実行させるためのユーティリティを選択してください。",
+    choices: ["xargs", "exec", "args", "foreach"],
+    answer: 0,
+    explain: "xargs コマンドは標準入力から読み込んだ項目を区切って指定されたコマンドの引数として構築・実行します。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "現在実行中のプロセス一覧と、各プロセスのPID、CPU使用率、メモリ使用率、状態などを動的にリアルタイム監視する対話型ツールを選択してください。",
+    choices: ["ps -ef", "top", "uptime", "vmstat -p"],
+    answer: 1,
+    explain: "top コマンドはシステム全体の状況およびプロセス毎のリソース利用状況をリアルタイムで監視・表示します。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "実行中のプロセスに対して、強制終了シグナル(SIGKILL, シグナル番号 9)を送信して即座に終了させるための kill コマンドの例として正しいものを選択してください。",
+    choices: ["kill -9 <PID> (または kill -KILL <PID>)", "kill -15 <PID>", "kill -1 <PID>", "kill -0 <PID>"],
+    answer: 0,
+    explain: "SIGKILL はシグナル番号 9 (または -KILL) であり、プロセスによって捕捉・無視できない強制終了シグナルです。デフォルトの kill <PID> は SIGTERM (15) を送信します。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "Linuxにおけるプロセスの優先度を決める「nice値」のインクリメント/デクリメントの範囲として正しいものを選択してください。",
+    choices: ["0 〜 100", "-20 〜 19", "-100 〜 100", "1 〜 99"],
+    answer: 1,
+    explain: "nice値は -20(最も優先度が高い)から 19(最も優先度が低い)の範囲の整数値をとります。一般ユーザーはnice値を上げること(優先度を下げる)しかできず、負の値(優先度を上げる)を設定するにはroot権限が必要です。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "すでに起動・実行されているプロセス(例: PID 1234)のnice値を後から「10」に変更するためのコマンドとして正しいものを選択してください。",
+    choices: ["nice -n 10 -p 1234", "renice 10 -p 1234 (または renice -n 10 1234)", "setnice 10 1234", "chnice 10 1234"],
+    answer: 1,
+    explain: "起動済みプロセスの優先度変更には renice コマンドを使用します。新規プロセスの起動時に優先度を指定する場合は nice コマンドです。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "拡張正規表現(ERE)において、「直前の文字またはグループの 1 回以上の繰り返し」を表すメタ文字として正しいものを選択してください。",
+    choices: ["*", "+", "?", "."],
+    answer: 1,
+    explain: "「+」は直前のパターンが1回以上繰り返すことにマッチします。「*」は0回以上、「?」は0回または1回です。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "grep コマンドにおいて、大文字・小文字の区別を無視してパターン検索を行うためのオプションとして正しいものを選択してください。",
+    choices: ["-v", "-i", "-n", "-r"],
+    answer: 1,
+    explain: "「-i」(ignore-case) オプションは大文字と小文字を区別せずに検索します。「-v」は一致しない行の抽出、「-n」は行番号表示です。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "非対話型ストリームエディタ sed を使用して、ファイル test.txt 内の最初に現れる文字列 \"apple\" を \"banana\" に置換して表示するコマンドを選択してください。",
+    choices: ["sed 's/apple/banana/' test.txt", "sed 'r/apple/banana/' test.txt", "sed 'change/apple/banana/' test.txt", "sed 'g/apple/banana/' test.txt"],
+    answer: 0,
+    explain: "「sed 's/古/新/'」の形式で文字列の置換を行います。行内のすべての \"apple\" を置換する場合は末尾に g フラグを付けて「sed 's/apple/banana/g'」とします。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "vi / vim エディタにおいて、ノーマルモードから「現在のカーソルの次(右)の位置」から挿入モードに入るコマンドとして正しいものを選択してください。",
+    choices: ["i", "a", "o", "A"],
+    answer: 1,
+    explain: "i はカーソル位置の前に挿入、a (append) はカーソル位置の後に挿入、o は下に行を挿入して入力モードへ移行します。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "2TBを超える大容量ディスクをパーティショニングする際に使用される、伝統的なMBR形式に代わるパーティションテーブル規格として正しいものを選択してください。",
+    choices: ["LVM", "GPT (GUID Partition Table)", "Ext4", "POSIX"],
+    answer: 1,
+    explain: "GPT (GUID Partition Table) は2TBの制限がなく、最大128個のプライマリパーティションを作成可能です。これを作成・操作するツールとして gdisk や parted があります。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "作成済みのパーティション /dev/sdb1 に対して、Ext4 ファイルシステムを構築(フォーマット)するための適切なコマンドを選択してください。",
+    choices: ["mkfs.ext4 /dev/sdb1 (または mkfs -t ext4 /dev/sdb1)", "format.ext4 /dev/sdb1", "fdisk -t ext4 /dev/sdb1", "mount -t ext4 /dev/sdb1"],
+    answer: 0,
+    explain: "ファイルシステムの作成には mkfs コマンド群(mkfs.ext4, mkfs.xfs など)を使用します。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "スワップ領域としてパーティション /dev/sdc2 を初期化(作成)し、その後有効化するためのコマンドの組み合わせとして正しいものを選択してください。",
+    choices: ["mkswap /dev/sdc2 の後に swapon /dev/sdc2", "swapfs /dev/sdc2 の後に swapstart /dev/sdc2", "mkfs.swap /dev/sdc2 の後に mountswap /dev/sdc2", "fdisk -s /dev/sdc2 の後に enable -s /dev/sdc2"],
+    answer: 0,
+    explain: "スワップ領域の初期化には mkswap コマンドを使用し、有効化には swapon コマンドを使用します。(非有効化は swapoff)"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "現在マウントされている全ファイルシステムの「ディスク容量の使用状況(空き容量、使用率、マウント位置など)」を、人間が読みやすい形式(KB/MB/GB単位)で一覧表示するコマンドを選択してください。",
+    choices: ["du -sh", "df -h", "ls -lh", "fdisk -l"],
+    answer: 1,
+    explain: "df (disk free) コマンドに -h (human-readable) オプションを付けることで、マウントされたファイルシステムの容量情報を表示します。du (disk usage) はファイル・ディレクトリごとの容量計算です。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "Ext2/Ext3/Ext4 ファイルシステムの整合性をチェックおよび修復するための専用コマンドとして正しいものを選択してください。",
+    choices: ["xfs_repair", "e2fsck (または fsck.ext4)", "tune2fs -c", "chkfs"],
+    answer: 1,
+    explain: "Ext系ファイルシステムの修復には e2fsck (または fsck) を使用します。XFSファイルシステムの場合は xfs_repair を使用します。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "Ext4 ファイルシステムのパラメータ(予約ブロック割合、ボリューム名、マウントカウントなど)の表示や変更を行う管理コマンドとして適切なものを選択してください。",
+    choices: ["dumpe2fs", "tune2fs", "resize2fs", "debugfs"],
+    answer: 1,
+    explain: "tune2fs は Ext2/Ext3/Ext4 ファイルシステムの各種設定パラメータを変更・調整するツールです。dumpe2fs は superblock やグループ情報を出力します。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "デバイス /dev/sdb1 をマウントポイント /mnt/data に読み取り専用(read-only)で手動マウントするための適切なコマンドを選択してください。",
+    choices: ["mount -o ro /dev/sdb1 /mnt/data", "mount -t ro /dev/sdb1 /mnt/data", "mount --read-only /dev/sdb1 /mnt/data", "mount -m ro /dev/sdb1 /mnt/data"],
+    answer: 0,
+    explain: "マウントオプションを指定するには -o オプションを使用します。読み取り専用マウントは -o ro です。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "起動時に自動マウントされるファイルシステムの設定が記述されているファイルとして正しいものを選択してください。",
+    choices: ["/etc/mtab", "/etc/fstab", "/proc/mounts", "/etc/exports"],
+    answer: 1,
+    explain: "/etc/fstab (filesystem table) にシステム起動時に自動マウントするデバイス、マウントポイント、ファイルシステムの種類、マウントオプションなどが記述されています。/etc/mtab や /proc/mounts は現在マウントされている動的な一覧です。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "/etc/fstab ファイル内に記述する各フィールド(列)の並び順として正しいものを選択してください。",
+    choices: [
+      "[マウントポイント] [デバイス] [ファイルシステムの種類] [マウントオプション] [dump] [fsck順序]",
+      "[デバイス] [マウントポイント] [ファイルシステムの種類] [マウントオプション] [dump] [fsck順序]",
+      "[デバイス] [ファイルシステムの種類] [マウントポイント] [マウントオプション] [fsck順序] [dump]",
+      "[ファイルシステムの種類] [デバイス] [マウントポイント] [マウントオプション] [dump] [fsck順序]"
+    ],
+    answer: 1,
+    explain: "/etc/fstab の 6 つのフィールドは左から順に、1:デバイス(またはUUID)、2:マウントポイント、3:ファイルシステムの種類、4:マウントオプション、5:dumpバックアップフラグ(0または1)、6:fsckチェック順序(0, 1, 2) です。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "ファイル script.sh のパーミッションを所有者(ユーザー)に「読み取り・書き込み・実行」、グループに「読み取り・実行」、その他に「読み取りのみ」に設定するための数値指定による chmod コマンドとして正しいものを選択してください。",
+    choices: ["chmod 755 script.sh", "chmod 754 script.sh", "chmod 644 script.sh", "chmod 775 script.sh"],
+    answer: 1,
+    explain: "所有者: 読み(4)+書き(2)+実行(1) = 7 / グループ: 読み(4)+実行(1) = 5 / その他: 読み(4) = 4。したがってパーミッション数値は 754 となります。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "ファイル file.txt の所有者を alice に、所有グループを developers に一括変更するための chown コマンドの記述として正しいものを選択してください。",
+    choices: ["chown alice:developers file.txt", "chown alice.developers file.txt", "chgrp alice:developers file.txt", "chmod alice:developers file.txt"],
+    answer: 0,
+    explain: "「chown ユーザー:グループ ファイル名」の形式で所有者と所有グループを同時に変更できます。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "デフォルトの umask 値が 022 に設定されているシステムにおいて、新規作成される「通常のファイル」に割り当てられるデフォルトパーミッション数値として正しいものを選択してください。",
+    choices: ["755", "644", "666", "777"],
+    answer: 1,
+    explain: "通常のファイルを作成する際のベースパーミッションは 666 (rw-rw-rw-) です。ここから umask 022 を引く(差し引く)と 644 (rw-r--r--) になります。(ディレクトリの場合はベース 777 - 022 = 755 です)"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "実行可能ファイルに対して設定すると、一般ユーザーが実行した際にも「ファイル所有者の権限」でプロセスが実行される特別なパーミッション(Set User ID)を表す数値・記号の組み合わせを選択してください。",
+    choices: ["数値: 4000 / 記号: s (所有者の実行権限部分)", "数値: 2000 / 記号: s (グループの実行権限部分)", "数値: 1000 / 記号: t (その他の実行権限部分)", "数値: 7000 / 記号: x"],
+    answer: 0,
+    explain: "SUID (Set User ID) は数値 4000 で、所有者の実行権限欄が s と表示されます(例: /usr/bin/passwd)。SGIDは 2000、Sticky Bitは 1000 です。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "ディレクトリ /tmp のように、すべてのユーザーがファイルを書き込めるが「自分の作成したファイルしか削除できない」ように制限する特殊パーミッション(Sticky Bit)を chmod で設定するための数値表記を選択してください。",
+    choices: ["chmod 1777 /tmp", "chmod 2777 /tmp", "chmod 4777 /tmp", "chmod 0777 /tmp"],
+    answer: 0,
+    explain: "Sticky Bit は 4 桁数値の先頭に 1 を指定します。chmod 1777 または chmod +t で設定します。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "Linuxにおける「ハードリンク」と「シンボリックリンク」に関する記述として、正しいものを1つ選択してください。",
+    choices: [
+      "ハードリンクは異なるファイルシステム(パーティション)をまたがって作成できる。",
+      "ハードリンクは元のファイルと同一の iノード(inode)番号を共有する。",
+      "元の(参照先)ファイルを削除すると、ハードリンクもアクセス不能(リンク切れ)になる。",
+      "ディレクトリに対するハードリンクは、一般ユーザーでも自由に行うことができる。"
+    ],
+    answer: 1,
+    explain: "ハードリンクは元のファイルと全く同じ iノード番号を参照します。そのため、元ファイルを削除してもデータ自体は残り、リンク数が0になるまでファイルの内容にアクセス可能です。また、ハードリンクは同一ファイルシステム内に限られます。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "既存のファイル /etc/issue に対するシンボリックリンク /tmp/issue-link を作成するための正しい ln コマンドを選択してください。",
+    choices: ["ln /etc/issue /tmp/issue-link", "ln -s /etc/issue /tmp/issue-link", "ln -h /etc/issue /tmp/issue-link", "ln --type=symlink /etc/issue /tmp/issue-link"],
+    answer: 1,
+    explain: "シンボリックリンクの作成には ln -s <参照先> <リンク名> を使用します。-s なしの ln はハードリンクを作成します。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "FHS (Filesystem Hierarchy Standard) に従った場合、静的で読み取り専用のシステム不可欠な実行可能バイナリ(コマンド)が配置される標準的なディレクトリとして正しいものを選択してください。",
+    choices: ["/var/bin", "/usr/bin", "/etc/bin", "/tmp/bin"],
+    answer: 1,
+    explain: "FHSにおいて、/usr/bin はユーザー用コマンドの大部分が配置される標準ディレクトリです。/bin も基本コマンドが配置されます。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "FHSにおいて、特定のディストリビューションに依存しないサードパーティ製のアプリケーションパッケージや追加ソフトウェアがインストールされる標準ディレクトリを選択してください。",
+    choices: ["/opt", "/srv", "/mnt", "/media"],
+    answer: 0,
+    explain: "/opt はサードパーティ製ソフトウェアや追加パッケージがまとまってインストールされるディレクトリです。/srv はWebやFTP等のサービス提供用データ、/media はリムーバブルメディアのマウントポイントです。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "事前生成されたデータベースを利用して、システム内のファイルパスを高速に検索するコマンドと、そのデータベースを更新するコマンドの組み合わせとして正しいものを選択してください。",
+    choices: ["検索: find / データベース更新: updatedb", "検索: locate / データベース更新: updatedb", "検索: whereis / データベース更新: mklocate", "検索: which / データベース更新: rehash"],
+    answer: 1,
+    explain: "locate コマンドは /var/lib/mlocate/mlocate.db などのインデックスデータベースを参照して高速にファイルを検索します。このデータベースを手動で更新するコマンドが updatedb です。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "指定したコマンド(例: ls)の「実行可能バイナリファイルのパス」「ソースファイル」「マニュアルページ(man)の場所」をまとめて検索・表示するコマンドを選択してください。",
+    choices: ["which", "whereis", "type", "findcmd"],
+    answer: 1,
+    explain: "whereis コマンドは指定したバイナリ、ソース、マニュアルページの位置を検索して出力します。which は環境変数 PATH に基づく実行可能ファイルのパスのみを表示します。"
+  }
+];
+
+const questions = [
+  ...OLD_QUESTIONS.map(q => ({ ...q, origin: "orig" })),
+  ...NEW_QUESTIONS.map(q => ({ ...q, origin: "new" }))
+];
+
+let current = 0;
+let score = 0;
+let answered = false;
+
+const quizCardEl = document.getElementById("quizCard");
+const categoryEl = document.getElementById("category");
+const questionEl = document.getElementById("question");
+const choicesEl = document.getElementById("choices");
+const explainEl = document.getElementById("explain");
+const explainTextEl = document.getElementById("explainText");
+const resultLabelEl = document.getElementById("resultLabel");
+const nextBtn = document.getElementById("nextBtn");
+const progressText = document.getElementById("progressText");
+const scoreText = document.getElementById("scoreText");
+const barFill = document.getElementById("barFill");
+const quizArea = document.getElementById("quizArea");
+const finishArea = document.getElementById("finishArea");
+const finalScore = document.getElementById("finalScore");
+const startArea = document.getElementById("startArea");
+const catList = document.getElementById("catList");
+const countRow = document.getElementById("countRow");
+const startBtn = document.getElementById("startBtn");
+
+const CATEGORIES = [...new Set(questions.map(q => q.category))];
+const COUNT_OPTIONS = [10, 20, 30, "全部"];
+
+let selectedCats = new Set(CATEGORIES);
+let selectedCount = 10;
+let quizSet = [];
+
+function renderStart() {
+  catList.innerHTML = "";
+  CATEGORIES.forEach(cat => {
+    const total = questions.filter(q => q.category === cat).length;
+    const item = document.createElement("button");
+    item.className = "cat-item" + (selectedCats.has(cat) ? " on" : "");
+    item.innerHTML = `<span>${cat}</span><span class="cat-count">${total}問</span>`;
+    item.addEventListener("click", () => {
+      if (selectedCats.has(cat)) selectedCats.delete(cat);
+      else selectedCats.add(cat);
+      renderStart();
+    });
+    catList.appendChild(item);
+  });
+
+  countRow.innerHTML = "";
+  COUNT_OPTIONS.forEach(opt => {
+    const btn = document.createElement("button");
+    btn.className = "count-btn" + (selectedCount === opt ? " on" : "");
+    btn.textContent = opt === "全部" ? "全部" : `${opt}問`;
+    btn.addEventListener("click", () => {
+      selectedCount = opt;
+      renderStart();
+    });
+    countRow.appendChild(btn);
+  });
+
+  const available = questions.filter(q => selectedCats.has(q.category)).length;
+  startBtn.disabled = available === 0;
+  startBtn.textContent = available === 0
+    ? "分野を1つ以上選んでください"
+    : `解き始める(${available}問から出題)`;
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startQuiz() {
+  const pool = shuffle(questions.filter(q => selectedCats.has(q.category)));
+  quizSet = selectedCount === "全部" ? pool : pool.slice(0, selectedCount);
+  current = 0;
+  score = 0;
+  startArea.style.display = "none";
+  finishArea.style.display = "none";
+  quizArea.style.display = "block";
+  renderQuestion();
+}
+
+function backToStart() {
+  quizArea.style.display = "none";
+  finishArea.style.display = "none";
+  startArea.style.display = "block";
+  renderStart();
+}
+
+function renderQuestion() {
+  answered = false;
+  const q = quizSet[current];
+  quizCardEl.classList.remove("origin-orig", "origin-new");
+  quizCardEl.classList.add(q.origin === "new" ? "origin-new" : "origin-orig");
+  categoryEl.textContent = q.category;
+  questionEl.textContent = q.question;
+  choicesEl.innerHTML = "";
+  explainEl.classList.remove("show");
+  nextBtn.classList.remove("show");
+
+  q.choices.forEach((choiceText, i) => {
+    const btn = document.createElement("button");
+    btn.className = "choice";
+    btn.textContent = choiceText;
+    btn.addEventListener("click", () => selectChoice(i));
+    choicesEl.appendChild(btn);
+  });
+
+  progressText.textContent = `${current + 1} / ${quizSet.length}`;
+  scoreText.textContent = `正解 ${score}`;
+  barFill.style.width = `${(current / quizSet.length) * 100}%`;
+}
+
+function selectChoice(i) {
+  if (answered) return;
+  answered = true;
+  const q = quizSet[current];
+  const buttons = choicesEl.querySelectorAll(".choice");
+  buttons.forEach((b, idx) => {
+    b.disabled = true;
+    if (idx === q.answer) b.classList.add("correct");
+    else if (idx === i) b.classList.add("wrong");
+  });
+
+  if (i === q.answer) {
+    score++;
+    resultLabelEl.textContent = "正解";
+    resultLabelEl.className = "result-label ok";
+  } else {
+    resultLabelEl.textContent = "不正解";
+    resultLabelEl.className = "result-label ng";
+  }
+  explainTextEl.textContent = q.explain;
+  explainEl.classList.add("show");
+  nextBtn.classList.add("show");
+  scoreText.textContent = `正解 ${score}`;
+}
+
+nextBtn.addEventListener("click", () => {
+  current++;
+  if (current < quizSet.length) {
+    renderQuestion();
+  } else {
+    barFill.style.width = "100%";
+    quizArea.style.display = "none";
+    finishArea.style.display = "block";
+    finalScore.textContent = `${score} / ${quizSet.length}`;
+  }
+});
+
+document.getElementById("retryBtn").addEventListener("click", startQuiz);
+document.getElementById("quitBtn").addEventListener("click", backToStart);
+document.getElementById("backBtn").addEventListener("click", backToStart);
+startBtn.addEventListener("click", startQuiz);
+
+renderStart();
+</script>
+</body>
+</html>
