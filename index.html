@@ -261,6 +261,31 @@
     cursor: pointer;
     font-size: 14px;
   }
+  .wrong-panel {
+    margin-top: 20px;
+  }
+  .wrong-item {
+    background: var(--card);
+    border: 1px solid var(--wrong);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 10px;
+    text-align: left;
+  }
+  .wrong-item .question {
+    margin: 10px 0 12px;
+  }
+  .wrong-item .wrong-answer {
+    font-size: 13px;
+    font-weight: bold;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+  .wrong-item .wrong-explain {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--sub);
+  }
 
   .toptabs {
     position: fixed;
@@ -333,6 +358,21 @@
     border-color: var(--accent);
     color: var(--accent);
   }
+  .cmd-hide-btn {
+    flex: 1;
+    padding: 9px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--ink);
+  }
+  .cmd-hide-btn.on {
+    background: var(--wrong-bg);
+    border-color: var(--wrong);
+    color: var(--wrong);
+  }
   .cmd-hit {
     font-size: 12px;
     color: #fff;
@@ -360,11 +400,49 @@
     font-weight: 600;
     word-break: break-word;
   }
+  .cmd-name { color: var(--ink); }
+  .cmd-opt {
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent);
+    background: var(--accent-bg);
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
   .cmd-meaning {
     flex: 1;
     font-size: 13px;
     line-height: 1.6;
     color: var(--ink);
+  }
+  .cmd-placeholder { display: none; }
+  .cmd-term.masked, .cmd-meaning.masked {
+    cursor: pointer;
+  }
+  .cmd-term.masked .cmd-real, .cmd-meaning.masked .cmd-real-text {
+    display: none;
+  }
+  .cmd-term.masked .cmd-placeholder, .cmd-meaning.masked .cmd-placeholder {
+    display: inline-block;
+    color: var(--sub);
+    font-weight: 400;
+    border: 1px dashed var(--line);
+    border-radius: 6px;
+    padding: 3px 10px;
+  }
+  .cmd-term.masked.revealed .cmd-real {
+    display: inline;
+  }
+  .cmd-term.masked.revealed .cmd-placeholder {
+    display: none;
+  }
+  .cmd-meaning.masked.revealed .cmd-real-text {
+    display: inline;
+  }
+  .cmd-meaning.masked.revealed .cmd-placeholder {
+    display: none;
   }
   .cmd-cat-tag {
     font-size: 11px;
@@ -445,6 +523,10 @@
       <button class="retry-btn" id="retryBtn">もう一度解く</button>
       <button class="quit-btn" id="backBtn">分野の選択に戻る</button>
     </div>
+    <div class="wrong-panel" id="wrongPanel" style="display:none">
+      <p class="field-label">間違えた問題</p>
+      <div id="wrongList"></div>
+    </div>
   </div>
 </div>
 
@@ -458,6 +540,10 @@
   <div class="cmd-viewtabs">
     <button class="cmd-view-btn on" data-view="all">一覧</button>
     <button class="cmd-view-btn" data-view="group">分野別</button>
+  </div>
+  <div class="cmd-viewtabs">
+    <button class="cmd-hide-btn" id="hideCmdBtn">コマンドを隠す</button>
+    <button class="cmd-hide-btn" id="hideMeaningBtn">説明を隠す</button>
   </div>
   <p class="cmd-hit" id="cmdHit"></p>
   <div class="cmd-list-card">
@@ -508,6 +594,10 @@
       <div class="score" id="freqFinalScore">0 / 15</div>
       <button class="retry-btn" id="freqRetryBtn">もう一度解く</button>
       <button class="quit-btn" id="freqBackBtn">分野の選択に戻る</button>
+    </div>
+    <div class="wrong-panel" id="freqWrongPanel" style="display:none">
+      <p class="field-label">間違えた問題</p>
+      <div id="freqWrongList"></div>
     </div>
   </div>
 </div>
@@ -2641,6 +2731,8 @@ const startArea = document.getElementById("startArea");
 const catList = document.getElementById("catList");
 const countRow = document.getElementById("countRow");
 const startBtn = document.getElementById("startBtn");
+const wrongPanel = document.getElementById("wrongPanel");
+const wrongList = document.getElementById("wrongList");
 
 const CATEGORIES = [...new Set(questions.map(q => q.category))];
 const COUNT_OPTIONS = [10, 20, 30, "全部"];
@@ -2648,6 +2740,7 @@ const COUNT_OPTIONS = [10, 20, 30, "全部"];
 let selectedCats = new Set();
 let selectedCount = 10;
 let quizSet = [];
+let wrongAnswers = [];
 
 function renderStart() {
   catList.innerHTML = "";
@@ -2692,11 +2785,39 @@ function shuffle(arr) {
   return a;
 }
 
+function renderWrongList(panelEl, listEl, wrongs) {
+  listEl.innerHTML = "";
+  if (wrongs.length === 0) {
+    panelEl.style.display = "none";
+    return;
+  }
+  panelEl.style.display = "block";
+  wrongs.forEach(q => {
+    const item = document.createElement("div");
+    item.className = "wrong-item";
+    const cat = document.createElement("div");
+    cat.className = "category";
+    cat.textContent = q.category;
+    const question = document.createElement("div");
+    question.className = "question";
+    question.textContent = q.question;
+    const answer = document.createElement("div");
+    answer.className = "wrong-answer";
+    answer.textContent = "正解: " + q.choices[q.answer];
+    const explain = document.createElement("div");
+    explain.className = "wrong-explain";
+    explain.textContent = q.explain;
+    item.append(cat, question, answer, explain);
+    listEl.appendChild(item);
+  });
+}
+
 function startQuiz() {
   const pool = shuffle(questions.filter(q => selectedCats.has(q.category)));
   quizSet = selectedCount === "全部" ? pool : pool.slice(0, selectedCount);
   current = 0;
   score = 0;
+  wrongAnswers = [];
   startArea.style.display = "none";
   finishArea.style.display = "none";
   quizArea.style.display = "block";
@@ -2752,6 +2873,7 @@ function selectChoice(i) {
   } else {
     resultLabelEl.textContent = "不正解";
     resultLabelEl.className = "result-label ng";
+    wrongAnswers.push(q);
   }
   explainTextEl.textContent = q.explain;
   explainEl.classList.add("show");
@@ -2768,6 +2890,7 @@ nextBtn.addEventListener("click", () => {
     quizArea.style.display = "none";
     finishArea.style.display = "block";
     finalScore.textContent = `${score} / ${quizSet.length}`;
+    renderWrongList(wrongPanel, wrongList, wrongAnswers);
   }
 });
 
@@ -2782,117 +2905,121 @@ renderStart();
    コマンド一覧タブ
    ============================================================ */
 const COMMANDS = [
-  ["lspci", "PCIデバイスの情報を表示する", "101 システムアーキテクチャ"],
-  ["lsusb", "USB接続の機器の情報を表示する", "101 システムアーキテクチャ"],
-  ["lsmod", "組み込み済みのカーネルモジュールを一覧表示する", "101 システムアーキテクチャ"],
-  ["modprobe", "依存関係を解決しながらカーネルモジュールを組み込む・外す", "101 システムアーキテクチャ"],
-  ["insmod", "カーネルモジュールを組み込む。依存関係は解決しない", "101 システムアーキテクチャ"],
-  ["rmmod", "カーネルモジュールを取り外す", "101 システムアーキテクチャ"],
-  ["modinfo", "カーネルモジュールの詳細情報を表示する", "101 システムアーキテクチャ"],
-  ["dmesg", "カーネルが起動時に出したメッセージを表示する", "101 システムアーキテクチャ"],
-  ["/proc", "カーネルやプロセスの情報を持つ仮想ファイルシステム", "101 システムアーキテクチャ"],
-  ["/sys", "デバイスやドライバの情報を持つ仮想ファイルシステム", "101 システムアーキテクチャ"],
-  ["udev", "接続された機器に応じてデバイスファイルを自動で作る仕組み", "101 システムアーキテクチャ"],
-  ["systemctl", "systemdでサービスやユニットを起動・停止・自動起動設定する", "101 システムアーキテクチャ"],
-  ["journalctl", "systemdが記録したログを表示する", "101 システムアーキテクチャ"],
-  ["ランレベル 0 / 6", "0はシステム停止、6は再起動", "101 システムアーキテクチャ"],
-  ["ランレベル 3 / 5", "3はCUIでのマルチユーザー、5はGUIあり", "101 システムアーキテクチャ"],
-  ["init / telinit", "SysVinitで実行レベルを切り替えるコマンド", "101 システムアーキテクチャ"],
-  ["shutdown -h now", "システムをただちに安全に停止する", "101 システムアーキテクチャ"],
-  ["GRUB2の設定", "/etc/default/grub を編集し grub-mkconfig で grub.cfg を作る", "101 システムアーキテクチャ"],
-  ["UEFI", "BIOSに代わる起動用ファームウェア。GPTと組み合わせて使う", "101 システムアーキテクチャ"],
+  ["lspci", "", "PCIデバイスの情報を表示する", "101 システムアーキテクチャ"],
+  ["lsusb", "", "USB接続の機器の情報を表示する", "101 システムアーキテクチャ"],
+  ["lsmod", "", "組み込み済みのカーネルモジュールを一覧表示する", "101 システムアーキテクチャ"],
+  ["modprobe", "", "依存関係を解決しながらカーネルモジュールを組み込む・外す", "101 システムアーキテクチャ"],
+  ["insmod", "", "カーネルモジュールを組み込む。依存関係は解決しない", "101 システムアーキテクチャ"],
+  ["rmmod", "", "カーネルモジュールを取り外す", "101 システムアーキテクチャ"],
+  ["modinfo", "", "カーネルモジュールの詳細情報を表示する", "101 システムアーキテクチャ"],
+  ["dmesg", "", "カーネルが起動時に出したメッセージを表示する", "101 システムアーキテクチャ"],
+  ["/proc", "", "カーネルやプロセスの情報を持つ仮想ファイルシステム", "101 システムアーキテクチャ"],
+  ["/sys", "", "デバイスやドライバの情報を持つ仮想ファイルシステム", "101 システムアーキテクチャ"],
+  ["udev", "", "接続された機器に応じてデバイスファイルを自動で作る仕組み", "101 システムアーキテクチャ"],
+  ["systemctl", "", "systemdでサービスやユニットを起動・停止・自動起動設定する", "101 システムアーキテクチャ"],
+  ["journalctl", "", "systemdが記録したログを表示する", "101 システムアーキテクチャ"],
+  ["ランレベル", "0 / 6", "0はシステム停止、6は再起動", "101 システムアーキテクチャ"],
+  ["ランレベル", "3 / 5", "3はCUIでのマルチユーザー、5はGUIあり", "101 システムアーキテクチャ"],
+  ["init / telinit", "", "SysVinitで実行レベルを切り替えるコマンド", "101 システムアーキテクチャ"],
+  ["shutdown", "-h now", "システムをただちに安全に停止する", "101 システムアーキテクチャ"],
+  ["GRUB2の設定", "", "/etc/default/grub を編集し grub-mkconfig で grub.cfg を作る", "101 システムアーキテクチャ"],
+  ["UEFI", "", "BIOSに代わる起動用ファームウェア。GPTと組み合わせて使う", "101 システムアーキテクチャ"],
 
-  ["dpkg -i", "Debian系のパッケージをインストールする", "102 パッケージ管理"],
-  ["dpkg -l", "インストール済みのパッケージを一覧表示する", "102 パッケージ管理"],
-  ["dpkg -L", "そのパッケージが入れたファイルの一覧を表示する", "102 パッケージ管理"],
-  ["dpkg -S", "指定したファイルがどのパッケージのものか調べる", "102 パッケージ管理"],
-  ["apt install", "依存関係を解決してパッケージを導入する", "102 パッケージ管理"],
-  ["apt-cache search", "キーワードでパッケージを検索する", "102 パッケージ管理"],
-  ["/etc/apt/sources.list", "aptの取得先リポジトリを書く設定ファイル", "102 パッケージ管理"],
-  ["rpm -i", "RPMパッケージをインストールする", "102 パッケージ管理"],
-  ["rpm -qa", "インストール済みパッケージをすべて表示する", "102 パッケージ管理"],
-  ["rpm -qf", "指定したファイルが属するパッケージを調べる", "102 パッケージ管理"],
-  ["rpm -e", "RPMパッケージを削除する", "102 パッケージ管理"],
-  ["yum / dnf install", "依存関係を解決してRPMパッケージを導入する", "102 パッケージ管理"],
-  ["ldd", "実行ファイルが必要とする共有ライブラリを表示する", "102 パッケージ管理"],
-  ["ldconfig", "共有ライブラリのキャッシュを作り直す", "102 パッケージ管理"],
-  ["/etc/ld.so.conf", "共有ライブラリを探すディレクトリを指定する設定ファイル", "102 パッケージ管理"],
-  ["LD_LIBRARY_PATH", "共有ライブラリを追加で探す場所を指定する環境変数", "102 パッケージ管理"],
+  ["dpkg", "-i", "Debian系のパッケージをインストールする", "102 パッケージ管理"],
+  ["dpkg", "-l", "インストール済みのパッケージを一覧表示する", "102 パッケージ管理"],
+  ["dpkg", "-L", "そのパッケージが入れたファイルの一覧を表示する", "102 パッケージ管理"],
+  ["dpkg", "-S", "指定したファイルがどのパッケージのものか調べる", "102 パッケージ管理"],
+  ["apt", "install", "依存関係を解決してパッケージを導入する", "102 パッケージ管理"],
+  ["apt-cache", "search", "キーワードでパッケージを検索する", "102 パッケージ管理"],
+  ["/etc/apt/sources.list", "", "aptの取得先リポジトリを書く設定ファイル", "102 パッケージ管理"],
+  ["rpm", "-i", "RPMパッケージをインストールする", "102 パッケージ管理"],
+  ["rpm", "-qa", "インストール済みパッケージをすべて表示する", "102 パッケージ管理"],
+  ["rpm", "-qf", "指定したファイルが属するパッケージを調べる", "102 パッケージ管理"],
+  ["rpm", "-e", "RPMパッケージを削除する", "102 パッケージ管理"],
+  ["yum / dnf", "install", "依存関係を解決してRPMパッケージを導入する", "102 パッケージ管理"],
+  ["ldd", "", "実行ファイルが必要とする共有ライブラリを表示する", "102 パッケージ管理"],
+  ["ldconfig", "", "共有ライブラリのキャッシュを作り直す", "102 パッケージ管理"],
+  ["/etc/ld.so.conf", "", "共有ライブラリを探すディレクトリを指定する設定ファイル", "102 パッケージ管理"],
+  ["LD_LIBRARY_PATH", "", "共有ライブラリを追加で探す場所を指定する環境変数", "102 パッケージ管理"],
 
-  ["ls -a", "隠しファイルも含めて表示する", "103 コマンド操作"],
-  ["ls -l", "権限・所有者・サイズなど詳細を表示する", "103 コマンド操作"],
-  ["cp -r", "ディレクトリを中身ごとコピーする", "103 コマンド操作"],
-  ["mkdir -p", "途中のディレクトリもまとめて作成する", "103 コマンド操作"],
-  ["rm -rf", "確認せずにディレクトリを中身ごと削除する", "103 コマンド操作"],
-  ["touch", "空ファイルを作る。既存ならタイムスタンプを更新する", "103 コマンド操作"],
-  ["find", "条件を指定してファイルを探す。-name -type -size など", "103 コマンド操作"],
-  ["locate", "データベースから高速に検索する。updatedbで更新する", "103 コマンド操作"],
-  ["which", "コマンドの実体がどこにあるかを表示する", "103 コマンド操作"],
-  ["file", "ファイルの種類を判定して表示する", "103 コマンド操作"],
-  ["cat", "ファイルの内容を表示する、または連結する", "103 コマンド操作"],
-  ["less", "1画面ずつスクロールしながらファイルを読む", "103 コマンド操作"],
-  ["head -n 5", "ファイルの先頭5行を表示する", "103 コマンド操作"],
-  ["tail -f", "ファイルの末尾を監視し続ける。ログ確認に使う", "103 コマンド操作"],
-  ["wc -l", "行数を数える", "103 コマンド操作"],
-  ["sort -n", "数値として並べ替える", "103 コマンド操作"],
-  ["uniq", "連続した重複行をまとめる。先にsortが必要", "103 コマンド操作"],
-  ["cut -d , -f 2", "区切り文字を指定して2列目だけ取り出す", "103 コマンド操作"],
-  ["tr", "文字を置き換える、削除する", "103 コマンド操作"],
-  ["sed", "文字列の置換や行の削除を行う。sの後にパターンを書く", "103 コマンド操作"],
-  ["grep -i", "大文字小文字を区別せずに検索する", "103 コマンド操作"],
-  ["grep -v", "一致しない行だけを表示する", "103 コマンド操作"],
-  ["grep -r", "ディレクトリをたどって再帰的に検索する", "103 コマンド操作"],
-  ["xargs", "前のコマンドの出力を引数に変えてコマンドを実行する", "103 コマンド操作"],
-  ["tee", "画面に出しながら同時にファイルにも書き込む", "103 コマンド操作"],
-  ["パイプ |", "前のコマンドの出力を次のコマンドの入力に渡す", "103 コマンド操作"],
-  ["2>", "標準エラー出力だけをファイルに送る", "103 コマンド操作"],
-  ["&>", "標準出力と標準エラー出力をまとめてファイルに送る", "103 コマンド操作"],
-  ["ps aux", "実行中のプロセスを詳しく一覧表示する", "103 コマンド操作"],
-  ["top", "プロセスの状況をリアルタイムに表示する", "103 コマンド操作"],
-  ["kill -9", "プロセスを強制終了する。シグナル名はSIGKILL", "103 コマンド操作"],
-  ["killall", "プロセス名を指定してまとめて終了させる", "103 コマンド操作"],
-  ["jobs", "シェルが管理しているジョブを一覧表示する", "103 コマンド操作"],
-  ["fg / bg", "ジョブを前面で動かす / 背後で動かす", "103 コマンド操作"],
-  ["nohup", "ログアウトしても処理を続けさせる", "103 コマンド操作"],
-  ["nice / renice", "プロセスの優先度を設定・変更する。範囲は-20〜19", "103 コマンド操作"],
-  ["tar cvf", "複数のファイルを1つのアーカイブにまとめる", "103 コマンド操作"],
-  ["tar xvf", "アーカイブを展開する", "103 コマンド操作"],
-  ["gzip / gunzip", "ファイルを圧縮する / 展開する。拡張子は.gz", "103 コマンド操作"],
-  ["vi の i", "入力モードに入る", "103 コマンド操作"],
-  ["vi の :wq", "保存して終了する", "103 コマンド操作"],
-  ["vi の :q!", "保存せずに終了する", "103 コマンド操作"],
-  ["正規表現 ^ と $", "行の先頭 / 行の末尾を表す", "103 コマンド操作"],
-  ["正規表現 . と *", "任意の1文字 / 直前の文字の0回以上の繰り返し", "103 コマンド操作"],
+  ["ls", "-a", "隠しファイルも含めて表示する", "103 コマンド操作"],
+  ["ls", "-l", "権限・所有者・サイズなど詳細を表示する", "103 コマンド操作"],
+  ["cp", "-r", "ディレクトリを中身ごとコピーする", "103 コマンド操作"],
+  ["mkdir", "-p", "途中のディレクトリもまとめて作成する", "103 コマンド操作"],
+  ["rm", "-rf", "確認せずにディレクトリを中身ごと削除する", "103 コマンド操作"],
+  ["touch", "", "空ファイルを作る。既存ならタイムスタンプを更新する", "103 コマンド操作"],
+  ["find", "", "条件を指定してファイルを探す。-name -type -size など", "103 コマンド操作"],
+  ["locate", "", "データベースから高速に検索する。updatedbで更新する", "103 コマンド操作"],
+  ["which", "", "コマンドの実体がどこにあるかを表示する", "103 コマンド操作"],
+  ["file", "", "ファイルの種類を判定して表示する", "103 コマンド操作"],
+  ["cat", "", "ファイルの内容を表示する、または連結する", "103 コマンド操作"],
+  ["less", "", "1画面ずつスクロールしながらファイルを読む", "103 コマンド操作"],
+  ["head", "-n 5", "ファイルの先頭5行を表示する", "103 コマンド操作"],
+  ["tail", "-f", "ファイルの末尾を監視し続ける。ログ確認に使う", "103 コマンド操作"],
+  ["wc", "-l", "行数を数える", "103 コマンド操作"],
+  ["sort", "-n", "数値として並べ替える", "103 コマンド操作"],
+  ["uniq", "", "連続した重複行をまとめる。先にsortが必要", "103 コマンド操作"],
+  ["cut", "-d , -f 2", "区切り文字を指定して2列目だけ取り出す", "103 コマンド操作"],
+  ["tr", "", "文字を置き換える、削除する", "103 コマンド操作"],
+  ["sed", "", "文字列の置換や行の削除を行う。sの後にパターンを書く", "103 コマンド操作"],
+  ["grep", "-i", "大文字小文字を区別せずに検索する", "103 コマンド操作"],
+  ["grep", "-v", "一致しない行だけを表示する", "103 コマンド操作"],
+  ["grep", "-r", "ディレクトリをたどって再帰的に検索する", "103 コマンド操作"],
+  ["xargs", "", "前のコマンドの出力を引数に変えてコマンドを実行する", "103 コマンド操作"],
+  ["tee", "", "画面に出しながら同時にファイルにも書き込む", "103 コマンド操作"],
+  ["パイプ", "|", "前のコマンドの出力を次のコマンドの入力に渡す", "103 コマンド操作"],
+  ["2>", "", "標準エラー出力だけをファイルに送る", "103 コマンド操作"],
+  ["&>", "", "標準出力と標準エラー出力をまとめてファイルに送る", "103 コマンド操作"],
+  ["ps", "aux", "実行中のプロセスを詳しく一覧表示する", "103 コマンド操作"],
+  ["top", "", "プロセスの状況をリアルタイムに表示する", "103 コマンド操作"],
+  ["kill", "-9", "プロセスを強制終了する。シグナル名はSIGKILL", "103 コマンド操作"],
+  ["killall", "", "プロセス名を指定してまとめて終了させる", "103 コマンド操作"],
+  ["jobs", "", "シェルが管理しているジョブを一覧表示する", "103 コマンド操作"],
+  ["fg / bg", "", "ジョブを前面で動かす / 背後で動かす", "103 コマンド操作"],
+  ["nohup", "", "ログアウトしても処理を続けさせる", "103 コマンド操作"],
+  ["nice / renice", "", "プロセスの優先度を設定・変更する。範囲は-20〜19", "103 コマンド操作"],
+  ["tar", "cvf", "複数のファイルを1つのアーカイブにまとめる", "103 コマンド操作"],
+  ["tar", "xvf", "アーカイブを展開する", "103 コマンド操作"],
+  ["gzip / gunzip", "", "ファイルを圧縮する / 展開する。拡張子は.gz", "103 コマンド操作"],
+  ["vi", "i", "入力モードに入る", "103 コマンド操作"],
+  ["vi", ":wq", "保存して終了する", "103 コマンド操作"],
+  ["vi", ":q!", "保存せずに終了する", "103 コマンド操作"],
+  ["正規表現", "^ と $", "行の先頭 / 行の末尾を表す", "103 コマンド操作"],
+  ["正規表現", ". と *", "任意の1文字 / 直前の文字の0回以上の繰り返し", "103 コマンド操作"],
 
-  ["fdisk", "MBR形式のパーティションを作成・変更する", "104 ファイルシステム"],
-  ["gdisk / parted", "GPT形式に対応したパーティション管理を行う", "104 ファイルシステム"],
-  ["mkfs -t ext4", "指定した形式でファイルシステムを作成する", "104 ファイルシステム"],
-  ["mkswap / swapon", "スワップ領域を作成する / 有効にする", "104 ファイルシステム"],
-  ["fsck", "ファイルシステムの検査と修復を行う", "104 ファイルシステム"],
-  ["tune2fs", "ext系ファイルシステムの設定を後から変更する", "104 ファイルシステム"],
-  ["mount / umount", "ファイルシステムを接続する / 切り離す", "104 ファイルシステム"],
-  ["/etc/fstab", "起動時に自動でマウントする設定を書くファイル", "104 ファイルシステム"],
-  ["df -h", "ディスクの使用状況を見やすい単位で表示する", "104 ファイルシステム"],
-  ["du -sh", "指定した場所の使用容量を合計で表示する", "104 ファイルシステム"],
-  ["chmod 755", "権限を数値で設定する。読み4・書き2・実行1", "104 ファイルシステム"],
-  ["chown", "ファイルの所有者を変更する", "104 ファイルシステム"],
-  ["chgrp", "ファイルの所有グループを変更する", "104 ファイルシステム"],
-  ["umask", "新しく作るファイルから差し引く権限。既定値は022", "104 ファイルシステム"],
-  ["SUID / SGID / スティッキー", "数値では4000 / 2000 / 1000", "104 ファイルシステム"],
-  ["ln -s", "シンボリックリンクを作る。別のパーティションでも可", "104 ファイルシステム"],
-  ["ln", "ハードリンクを作る。同じiノードを指し、別パーティションは不可", "104 ファイルシステム"],
-  ["/etc", "設定ファイルを置く場所", "104 ファイルシステム"],
-  ["/var", "ログやメールなど、変化していくデータを置く場所", "104 ファイルシステム"],
-  ["/usr", "共有できる読み取り専用のプログラムを置く場所", "104 ファイルシステム"],
-  ["/tmp", "一時ファイルを置く場所", "104 ファイルシステム"],
-  ["/boot", "カーネルなど起動に必要なファイルを置く場所", "104 ファイルシステム"]
-].map(r => ({ t: r[0], a: r[1], c: r[2] }));
+  ["fdisk", "", "MBR形式のパーティションを作成・変更する", "104 ファイルシステム"],
+  ["gdisk / parted", "", "GPT形式に対応したパーティション管理を行う", "104 ファイルシステム"],
+  ["mkfs", "-t ext4", "指定した形式でファイルシステムを作成する", "104 ファイルシステム"],
+  ["mkswap / swapon", "", "スワップ領域を作成する / 有効にする", "104 ファイルシステム"],
+  ["fsck", "", "ファイルシステムの検査と修復を行う", "104 ファイルシステム"],
+  ["tune2fs", "", "ext系ファイルシステムの設定を後から変更する", "104 ファイルシステム"],
+  ["mount / umount", "", "ファイルシステムを接続する / 切り離す", "104 ファイルシステム"],
+  ["/etc/fstab", "", "起動時に自動でマウントする設定を書くファイル", "104 ファイルシステム"],
+  ["df", "-h", "ディスクの使用状況を見やすい単位で表示する", "104 ファイルシステム"],
+  ["du", "-sh", "指定した場所の使用容量を合計で表示する", "104 ファイルシステム"],
+  ["chmod", "755", "権限を数値で設定する。読み4・書き2・実行1", "104 ファイルシステム"],
+  ["chown", "", "ファイルの所有者を変更する", "104 ファイルシステム"],
+  ["chgrp", "", "ファイルの所有グループを変更する", "104 ファイルシステム"],
+  ["umask", "", "新しく作るファイルから差し引く権限。既定値は022", "104 ファイルシステム"],
+  ["SUID / SGID / スティッキー", "", "数値では4000 / 2000 / 1000", "104 ファイルシステム"],
+  ["ln", "-s", "シンボリックリンクを作る。別のパーティションでも可", "104 ファイルシステム"],
+  ["ln", "", "ハードリンクを作る。同じiノードを指し、別パーティションは不可", "104 ファイルシステム"],
+  ["/etc", "", "設定ファイルを置く場所", "104 ファイルシステム"],
+  ["/var", "", "ログやメールなど、変化していくデータを置く場所", "104 ファイルシステム"],
+  ["/usr", "", "共有できる読み取り専用のプログラムを置く場所", "104 ファイルシステム"],
+  ["/tmp", "", "一時ファイルを置く場所", "104 ファイルシステム"],
+  ["/boot", "", "カーネルなど起動に必要なファイルを置く場所", "104 ファイルシステム"]
+].map(r => ({ cmd: r[0], opt: r[1], a: r[2], c: r[3] }));
 
 const cmdSearchEl = document.getElementById("cmdSearch");
 const cmdHitEl = document.getElementById("cmdHit");
 const cmdAllViewEl = document.getElementById("cmdAllView");
 const cmdGroupViewEl = document.getElementById("cmdGroupView");
+const hideCmdBtn = document.getElementById("hideCmdBtn");
+const hideMeaningBtn = document.getElementById("hideMeaningBtn");
 let cmdView = "all";
+let hideCmdText = false;
+let hideMeaningText = false;
 
 function cmdCategories() {
   const list = [];
@@ -2900,37 +3027,73 @@ function cmdCategories() {
   return list;
 }
 
+function cmdMatches(c, q) {
+  return !q
+    || c.cmd.toLowerCase().includes(q)
+    || (c.opt && c.opt.toLowerCase().includes(q))
+    || c.a.toLowerCase().includes(q)
+    || c.c.toLowerCase().includes(q);
+}
+
+function buildCmdRow(c) {
+  const row = document.createElement("div");
+  row.className = "cmd-row";
+
+  const term = document.createElement("div");
+  term.className = "cmd-term" + (hideCmdText ? " masked" : "");
+  const termReal = document.createElement("span");
+  termReal.className = "cmd-real";
+  const nameSpan = document.createElement("span");
+  nameSpan.className = "cmd-name";
+  nameSpan.textContent = c.cmd;
+  termReal.appendChild(nameSpan);
+  if (c.opt) {
+    const optSpan = document.createElement("span");
+    optSpan.className = "cmd-opt";
+    optSpan.textContent = c.opt;
+    termReal.appendChild(optSpan);
+  }
+  const termPlaceholder = document.createElement("span");
+  termPlaceholder.className = "cmd-placeholder";
+  termPlaceholder.textContent = "タップして表示";
+  term.append(termReal, termPlaceholder);
+  if (hideCmdText) {
+    term.addEventListener("click", () => term.classList.toggle("revealed"));
+  }
+
+  const meaning = document.createElement("div");
+  meaning.className = "cmd-meaning" + (hideMeaningText ? " masked" : "");
+  const meaningReal = document.createElement("span");
+  meaningReal.className = "cmd-real-text";
+  meaningReal.textContent = c.a;
+  const meaningPlaceholder = document.createElement("span");
+  meaningPlaceholder.className = "cmd-placeholder";
+  meaningPlaceholder.textContent = "タップして表示";
+  meaning.append(meaningReal, meaningPlaceholder);
+  if (hideMeaningText) {
+    meaning.addEventListener("click", () => meaning.classList.toggle("revealed"));
+  }
+  const tag = document.createElement("div");
+  tag.className = "cmd-cat-tag";
+  tag.textContent = c.c;
+  meaning.appendChild(tag);
+
+  row.append(term, meaning);
+  return row;
+}
+
 function renderCmdAll(q) {
-  const rows = COMMANDS.filter(c =>
-    !q || c.t.toLowerCase().includes(q) || c.a.toLowerCase().includes(q) || c.c.toLowerCase().includes(q)
-  );
+  const rows = COMMANDS.filter(c => cmdMatches(c, q));
   cmdHitEl.textContent = rows.length + " 件";
   cmdAllViewEl.innerHTML = "";
-  rows.forEach(c => {
-    const row = document.createElement("div");
-    row.className = "cmd-row";
-    const term = document.createElement("div");
-    term.className = "cmd-term";
-    term.textContent = c.t;
-    const meaning = document.createElement("div");
-    meaning.className = "cmd-meaning";
-    meaning.textContent = c.a;
-    const tag = document.createElement("div");
-    tag.className = "cmd-cat-tag";
-    tag.textContent = c.c;
-    meaning.appendChild(tag);
-    row.append(term, meaning);
-    cmdAllViewEl.appendChild(row);
-  });
+  rows.forEach(c => cmdAllViewEl.appendChild(buildCmdRow(c)));
 }
 
 function renderCmdGroup(q) {
   cmdGroupViewEl.innerHTML = "";
   let total = 0;
   cmdCategories().forEach(cat => {
-    const items = COMMANDS.filter(c =>
-      c.c === cat && (!q || c.t.toLowerCase().includes(q) || c.a.toLowerCase().includes(q))
-    );
+    const items = COMMANDS.filter(c => c.c === cat && cmdMatches(c, q));
     if (!items.length) return;
     total += items.length;
     const det = document.createElement("details");
@@ -2943,18 +3106,7 @@ function renderCmdGroup(q) {
     count.textContent = items.length + "件";
     sum.append(label, count);
     const inner = document.createElement("div");
-    items.forEach(c => {
-      const row = document.createElement("div");
-      row.className = "cmd-row";
-      const term = document.createElement("div");
-      term.className = "cmd-term";
-      term.textContent = c.t;
-      const meaning = document.createElement("div");
-      meaning.className = "cmd-meaning";
-      meaning.textContent = c.a;
-      row.append(term, meaning);
-      inner.appendChild(row);
-    });
+    items.forEach(c => inner.appendChild(buildCmdRow(c)));
     det.append(sum, inner);
     cmdGroupViewEl.appendChild(det);
   });
@@ -2982,6 +3134,16 @@ document.querySelectorAll(".cmd-view-btn").forEach(btn => {
     cmdView = btn.dataset.view;
     renderCmd();
   });
+});
+hideCmdBtn.addEventListener("click", () => {
+  hideCmdText = !hideCmdText;
+  hideCmdBtn.classList.toggle("on", hideCmdText);
+  renderCmd();
+});
+hideMeaningBtn.addEventListener("click", () => {
+  hideMeaningText = !hideMeaningText;
+  hideMeaningBtn.classList.toggle("on", hideMeaningText);
+  renderCmd();
 });
 
 renderCmd();
@@ -3889,6 +4051,8 @@ const freqStartArea = document.getElementById("freqStartArea");
 const freqCatList = document.getElementById("freqCatList");
 const freqCountRow = document.getElementById("freqCountRow");
 const freqStartBtn = document.getElementById("freqStartBtn");
+const freqWrongPanel = document.getElementById("freqWrongPanel");
+const freqWrongList = document.getElementById("freqWrongList");
 
 const FREQ_CATEGORIES = [...new Set(FREQ_QUESTIONS.map(q => q.category))];
 const FREQ_COUNT_OPTIONS = [10, 20, 30, "全部"];
@@ -3899,6 +4063,7 @@ let freqQuizSet = [];
 let freqCurrent = 0;
 let freqScore = 0;
 let freqAnswered = false;
+let freqWrongAnswers = [];
 
 function renderFreqStart() {
   freqCatList.innerHTML = "";
@@ -3939,6 +4104,7 @@ function startFreqQuiz() {
   freqQuizSet = freqSelectedCount === "全部" ? pool : pool.slice(0, freqSelectedCount);
   freqCurrent = 0;
   freqScore = 0;
+  freqWrongAnswers = [];
   freqStartArea.style.display = "none";
   freqFinishArea.style.display = "none";
   freqQuizArea.style.display = "block";
@@ -3992,6 +4158,7 @@ function selectFreqChoice(i) {
   } else {
     freqResultLabelEl.textContent = "不正解";
     freqResultLabelEl.className = "result-label ng";
+    freqWrongAnswers.push(q);
   }
   freqExplainTextEl.textContent = q.explain;
   freqExplainEl.classList.add("show");
@@ -4008,6 +4175,7 @@ freqNextBtn.addEventListener("click", () => {
     freqQuizArea.style.display = "none";
     freqFinishArea.style.display = "block";
     freqFinalScore.textContent = `${freqScore} / ${freqQuizSet.length}`;
+    renderWrongList(freqWrongPanel, freqWrongList, freqWrongAnswers);
   }
 });
 
