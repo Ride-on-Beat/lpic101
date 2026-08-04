@@ -385,6 +385,22 @@
     padding: 4px 16px;
     margin-bottom: 32px;
   }
+  .cmd-col-head {
+    display: flex;
+    gap: 12px;
+    position: sticky;
+    top: var(--header-h);
+    z-index: 5;
+    background: var(--card);
+    padding: 8px 2px;
+    border-bottom: 2px solid var(--line);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--sub);
+  }
+  .cmd-col-head-name { flex: 0 0 28%; }
+  .cmd-col-head-opt { flex: 0 0 18%; }
+  .cmd-col-head-meaning { flex: 1; }
   .cmd-row {
     display: flex;
     gap: 12px;
@@ -393,6 +409,7 @@
     align-items: flex-start;
   }
   .cmd-row:last-child { border-bottom: none; }
+  .cmd-row.no-line { border-bottom: none; }
   .cmd-name-col {
     flex: 0 0 28%;
     font-family: "SFMono-Regular", Menlo, Consolas, monospace;
@@ -551,6 +568,11 @@
   </div>
   <p class="cmd-hit" id="cmdHit"></p>
   <div class="cmd-list-card">
+    <div class="cmd-col-head">
+      <div class="cmd-col-head-name">コマンド</div>
+      <div class="cmd-col-head-opt">オプション/アクション</div>
+      <div class="cmd-col-head-meaning">説明</div>
+    </div>
     <div id="cmdAllView"></div>
     <div id="cmdGroupView" style="display:none"></div>
   </div>
@@ -3039,9 +3061,9 @@ function cmdMatches(c, q) {
     || c.c.toLowerCase().includes(q);
 }
 
-function buildCmdRow(c) {
+function buildCmdRow(c, sameAsNext) {
   const row = document.createElement("div");
-  row.className = "cmd-row";
+  row.className = "cmd-row" + (sameAsNext ? " no-line" : "");
 
   const nameCol = document.createElement("div");
   nameCol.className = "cmd-name-col cmd-maskable" + (hideCmdText ? " masked" : "");
@@ -3099,7 +3121,10 @@ function renderCmdAll(q) {
   const rows = COMMANDS.filter(c => cmdMatches(c, q));
   cmdHitEl.textContent = rows.length + " 件";
   cmdAllViewEl.innerHTML = "";
-  rows.forEach(c => cmdAllViewEl.appendChild(buildCmdRow(c)));
+  rows.forEach((c, i) => {
+    const sameAsNext = i < rows.length - 1 && rows[i + 1].cmd === c.cmd;
+    cmdAllViewEl.appendChild(buildCmdRow(c, sameAsNext));
+  });
 }
 
 function renderCmdGroup(q) {
@@ -3119,7 +3144,10 @@ function renderCmdGroup(q) {
     count.textContent = items.length + "件";
     sum.append(label, count);
     const inner = document.createElement("div");
-    items.forEach(c => inner.appendChild(buildCmdRow(c)));
+    items.forEach((c, i) => {
+      const sameAsNext = i < items.length - 1 && items[i + 1].cmd === c.cmd;
+      inner.appendChild(buildCmdRow(c, sameAsNext));
+    });
     det.append(sum, inner);
     cmdGroupViewEl.appendChild(det);
   });
