@@ -393,19 +393,23 @@
     align-items: flex-start;
   }
   .cmd-row:last-child { border-bottom: none; }
-  .cmd-term {
-    flex: 0 0 40%;
+  .cmd-name-col {
+    flex: 0 0 28%;
     font-family: "SFMono-Regular", Menlo, Consolas, monospace;
     font-size: 13px;
     font-weight: 600;
+    color: var(--ink);
     word-break: break-word;
   }
-  .cmd-name { color: var(--ink); }
-  .cmd-opt {
-    display: inline-block;
-    margin-left: 6px;
+  .cmd-opt-col {
+    flex: 0 0 18%;
+    font-family: "SFMono-Regular", Menlo, Consolas, monospace;
     font-size: 11px;
     font-weight: 600;
+    word-break: break-word;
+  }
+  .cmd-opt-col .cmd-opt {
+    display: inline-block;
     color: var(--accent);
     background: var(--accent-bg);
     padding: 1px 6px;
@@ -418,13 +422,13 @@
     color: var(--ink);
   }
   .cmd-placeholder { display: none; }
-  .cmd-term.masked, .cmd-meaning.masked {
+  .cmd-maskable.masked, .cmd-meaning.masked {
     cursor: pointer;
   }
-  .cmd-term.masked .cmd-real, .cmd-meaning.masked .cmd-real-text {
+  .cmd-maskable.masked .cmd-real, .cmd-meaning.masked .cmd-real-text {
     display: none;
   }
-  .cmd-term.masked .cmd-placeholder, .cmd-meaning.masked .cmd-placeholder {
+  .cmd-maskable.masked .cmd-placeholder, .cmd-meaning.masked .cmd-placeholder {
     display: inline-block;
     color: var(--sub);
     font-weight: 400;
@@ -432,10 +436,10 @@
     border-radius: 6px;
     padding: 3px 10px;
   }
-  .cmd-term.masked.revealed .cmd-real {
+  .cmd-maskable.masked.revealed .cmd-real {
     display: inline;
   }
-  .cmd-term.masked.revealed .cmd-placeholder {
+  .cmd-maskable.masked.revealed .cmd-placeholder {
     display: none;
   }
   .cmd-meaning.masked.revealed .cmd-real-text {
@@ -3039,26 +3043,35 @@ function buildCmdRow(c) {
   const row = document.createElement("div");
   row.className = "cmd-row";
 
-  const term = document.createElement("div");
-  term.className = "cmd-term" + (hideCmdText ? " masked" : "");
-  const termReal = document.createElement("span");
-  termReal.className = "cmd-real";
-  const nameSpan = document.createElement("span");
-  nameSpan.className = "cmd-name";
-  nameSpan.textContent = c.cmd;
-  termReal.appendChild(nameSpan);
+  const nameCol = document.createElement("div");
+  nameCol.className = "cmd-name-col cmd-maskable" + (hideCmdText ? " masked" : "");
+  const nameReal = document.createElement("span");
+  nameReal.className = "cmd-real";
+  nameReal.textContent = c.cmd;
+  const namePlaceholder = document.createElement("span");
+  namePlaceholder.className = "cmd-placeholder";
+  namePlaceholder.textContent = "タップして表示";
+  nameCol.append(nameReal, namePlaceholder);
+
+  const optCol = document.createElement("div");
+  optCol.className = "cmd-opt-col cmd-maskable" + (hideCmdText ? " masked" : "");
   if (c.opt) {
-    const optSpan = document.createElement("span");
-    optSpan.className = "cmd-opt";
-    optSpan.textContent = c.opt;
-    termReal.appendChild(optSpan);
+    const optReal = document.createElement("span");
+    optReal.className = "cmd-real cmd-opt";
+    optReal.textContent = c.opt;
+    const optPlaceholder = document.createElement("span");
+    optPlaceholder.className = "cmd-placeholder";
+    optPlaceholder.textContent = "タップして表示";
+    optCol.append(optReal, optPlaceholder);
   }
-  const termPlaceholder = document.createElement("span");
-  termPlaceholder.className = "cmd-placeholder";
-  termPlaceholder.textContent = "タップして表示";
-  term.append(termReal, termPlaceholder);
+
   if (hideCmdText) {
-    term.addEventListener("click", () => term.classList.toggle("revealed"));
+    const toggleTerm = () => {
+      nameCol.classList.toggle("revealed");
+      optCol.classList.toggle("revealed");
+    };
+    nameCol.addEventListener("click", toggleTerm);
+    optCol.addEventListener("click", toggleTerm);
   }
 
   const meaning = document.createElement("div");
@@ -3078,7 +3091,7 @@ function buildCmdRow(c) {
   tag.textContent = c.c;
   meaning.appendChild(tag);
 
-  row.append(term, meaning);
+  row.append(nameCol, optCol, meaning);
   return row;
 }
 
