@@ -3061,19 +3061,26 @@ function cmdMatches(c, q) {
     || c.c.toLowerCase().includes(q);
 }
 
-function buildCmdRow(c, sameAsNext) {
+function buildCmdRow(c, sameAsNext, continuation) {
   const row = document.createElement("div");
   row.className = "cmd-row" + (sameAsNext ? " no-line" : "");
 
   const nameCol = document.createElement("div");
-  nameCol.className = "cmd-name-col cmd-maskable" + (hideCmdText ? " masked" : "");
-  const nameReal = document.createElement("span");
-  nameReal.className = "cmd-real";
-  nameReal.textContent = c.cmd;
-  const namePlaceholder = document.createElement("span");
-  namePlaceholder.className = "cmd-placeholder";
-  namePlaceholder.textContent = "タップして表示";
-  nameCol.append(nameReal, namePlaceholder);
+  nameCol.className = "cmd-name-col";
+  if (!continuation) {
+    nameCol.classList.add("cmd-maskable");
+    if (hideCmdText) nameCol.classList.add("masked");
+    const nameReal = document.createElement("span");
+    nameReal.className = "cmd-real";
+    nameReal.textContent = c.cmd;
+    const namePlaceholder = document.createElement("span");
+    namePlaceholder.className = "cmd-placeholder";
+    namePlaceholder.textContent = "タップして表示";
+    nameCol.append(nameReal, namePlaceholder);
+    if (hideCmdText) {
+      nameCol.addEventListener("click", () => nameCol.classList.toggle("revealed"));
+    }
+  }
 
   const optCol = document.createElement("div");
   optCol.className = "cmd-opt-col cmd-maskable" + (hideCmdText ? " masked" : "");
@@ -3088,12 +3095,7 @@ function buildCmdRow(c, sameAsNext) {
   }
 
   if (hideCmdText) {
-    const toggleTerm = () => {
-      nameCol.classList.toggle("revealed");
-      optCol.classList.toggle("revealed");
-    };
-    nameCol.addEventListener("click", toggleTerm);
-    optCol.addEventListener("click", toggleTerm);
+    optCol.addEventListener("click", () => optCol.classList.toggle("revealed"));
   }
 
   const meaning = document.createElement("div");
@@ -3123,7 +3125,8 @@ function renderCmdAll(q) {
   cmdAllViewEl.innerHTML = "";
   rows.forEach((c, i) => {
     const sameAsNext = i < rows.length - 1 && rows[i + 1].cmd === c.cmd;
-    cmdAllViewEl.appendChild(buildCmdRow(c, sameAsNext));
+    const continuation = i > 0 && rows[i - 1].cmd === c.cmd;
+    cmdAllViewEl.appendChild(buildCmdRow(c, sameAsNext, continuation));
   });
 }
 
@@ -3146,7 +3149,8 @@ function renderCmdGroup(q) {
     const inner = document.createElement("div");
     items.forEach((c, i) => {
       const sameAsNext = i < items.length - 1 && items[i + 1].cmd === c.cmd;
-      inner.appendChild(buildCmdRow(c, sameAsNext));
+      const continuation = i > 0 && items[i - 1].cmd === c.cmd;
+      inner.appendChild(buildCmdRow(c, sameAsNext, continuation));
     });
     det.append(sum, inner);
     cmdGroupViewEl.appendChild(det);
