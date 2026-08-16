@@ -107,19 +107,19 @@
     border-radius: 10px;
     padding: 22px;
   }
-  #quizArea .card.origin-orig {
+  #quizArea .card.origin-orig, #freqQuizArea .card.origin-orig {
     background: #fff4e6;
     border-color: #e8a33d;
   }
-  #quizArea .card.origin-new {
+  #quizArea .card.origin-new, #freqQuizArea .card.origin-new {
     background: #e9f1fb;
     border-color: #3d7dc9;
   }
-  #quizArea .card.origin-extra {
+  #quizArea .card.origin-extra, #freqQuizArea .card.origin-extra {
     background: #f0f0f0;
     border-color: #9a9a9a;
   }
-  #quizArea .card.origin-imported {
+  #quizArea .card.origin-imported, #freqQuizArea .card.origin-imported {
     background: #e3e3e3;
     border-color: #888888;
   }
@@ -171,6 +171,24 @@
   }
   .result-label.ok { color: var(--accent); }
   .result-label.ng { color: var(--wrong); }
+  .nav-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .nav-row .next-btn { margin-top: 0; flex: 1; }
+  .prev-btn {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid var(--ink);
+    border-radius: 8px;
+    background: none;
+    color: var(--ink);
+    font-size: 14px;
+    cursor: pointer;
+    display: none;
+  }
+  .prev-btn.show { display: block; }
   .next-btn {
     margin-top: 16px;
     width: 100%;
@@ -581,7 +599,10 @@
         <div class="result-label" id="resultLabel"></div>
         <div id="explainText"></div>
       </div>
-      <button class="next-btn" id="nextBtn">次の問題へ</button>
+      <div class="nav-row">
+        <button class="prev-btn" id="prevBtn">前の問題へ</button>
+        <button class="next-btn" id="nextBtn">次の問題へ</button>
+      </div>
     </div>
     <button class="quit-btn" id="quitBtn">分野の選択に戻る</button>
   </div>
@@ -629,7 +650,7 @@
 
 <div class="app page" id="page-frequent">
   <h1>頻出問題</h1>
-  <div class="sub">各課題30問・計120問。試験で特に狙われやすい基礎項目に絞った問題集です</div>
+  <div class="sub">各課題40問・計160問。試験で特に狙われやすい基礎項目に絞った問題集です</div>
 
   <div id="freqStartArea">
     <div class="start-card resume-card" id="freqResumeCard" style="display:none">
@@ -664,7 +685,10 @@
         <div class="result-label" id="freqResultLabel"></div>
         <div id="freqExplainText"></div>
       </div>
-      <button class="next-btn" id="freqNextBtn">次の問題へ</button>
+      <div class="nav-row">
+        <button class="prev-btn" id="freqPrevBtn">前の問題へ</button>
+        <button class="next-btn" id="freqNextBtn">次の問題へ</button>
+      </div>
     </div>
     <button class="quit-btn" id="freqQuitBtn">分野の選択に戻る</button>
   </div>
@@ -716,7 +740,10 @@
         <div class="result-label" id="weakResultLabel"></div>
         <div id="weakExplainText"></div>
       </div>
-      <button class="next-btn" id="weakNextBtn">次の問題へ</button>
+      <div class="nav-row">
+        <button class="prev-btn" id="weakPrevBtn">前の問題へ</button>
+        <button class="next-btn" id="weakNextBtn">次の問題へ</button>
+      </div>
     </div>
     <button class="quit-btn" id="weakQuitBtn">一覧に戻る</button>
   </div>
@@ -4255,8 +4282,8 @@ const questions = [
 ];
 
 let current = 0;
+let viewIndex = 0;
 let score = 0;
-let answered = false;
 
 const quizCardEl = document.getElementById("quizCard");
 const categoryEl = document.getElementById("category");
@@ -4265,6 +4292,7 @@ const choicesEl = document.getElementById("choices");
 const explainEl = document.getElementById("explain");
 const explainTextEl = document.getElementById("explainText");
 const resultLabelEl = document.getElementById("resultLabel");
+const prevBtn = document.getElementById("prevBtn");
 const nextBtn = document.getElementById("nextBtn");
 const progressText = document.getElementById("progressText");
 const scoreText = document.getElementById("scoreText");
@@ -4286,6 +4314,7 @@ let selectedCats = new Set();
 let selectedCount = 10;
 let quizSet = [];
 let wrongAnswers = [];
+let quizAnswers = [];
 
 /* ---- 中断・再開(予想問題) ---- */
 const EXAM_SESSION_KEY = "lpic101_exam_session_v1";
@@ -4298,12 +4327,13 @@ function saveExamSession() {
   try {
     // 回答済みだがまだ「次の問題へ」を押していない場合は、その問題は完了済みとして扱う
     // (そうしないと再開時に同じ問題が再表示され、二重に採点されてしまう)
-    const resumeAt = answered ? current + 1 : current;
+    const resumeAt = quizAnswers[current] ? current + 1 : current;
     localStorage.setItem(EXAM_SESSION_KEY, JSON.stringify({
       ids: quizSet.map(qid),
       current: resumeAt,
       score,
-      wrongIds: wrongAnswers.map(qid)
+      wrongIds: wrongAnswers.map(qid),
+      answers: quizAnswers.map(a => (a ? a.selected : null))
     }));
   } catch (e) { /* ignore */ }
 }
@@ -4402,8 +4432,10 @@ function startQuiz() {
   const pool = shuffle(questions.filter(q => selectedCats.has(q.category)));
   quizSet = selectedCount === "全部" ? pool : pool.slice(0, selectedCount);
   current = 0;
+  viewIndex = 0;
   score = 0;
   wrongAnswers = [];
+  quizAnswers = [];
   startArea.style.display = "none";
   finishArea.style.display = "none";
   quizArea.style.display = "block";
@@ -4413,9 +4445,14 @@ function startQuiz() {
 function resumeQuiz() {
   const saved = loadExamSession();
   if (!saved) { renderExamResume(); return; }
-  const restored = saved.ids.map(id => ALL_QUESTIONS_BY_ID.get(id)).filter(Boolean);
-  quizSet = restored;
+  const savedAnswers = saved.answers || [];
+  const pairs = saved.ids
+    .map((id, i) => ({ q: ALL_QUESTIONS_BY_ID.get(id), sel: savedAnswers[i] }))
+    .filter(p => p.q);
+  quizSet = pairs.map(p => p.q);
+  quizAnswers = pairs.map(p => (p.sel === null || p.sel === undefined ? null : { selected: p.sel }));
   current = Math.min(saved.current, quizSet.length);
+  viewIndex = current;
   score = saved.score;
   wrongAnswers = (saved.wrongIds || []).map(id => ALL_QUESTIONS_BY_ID.get(id)).filter(Boolean);
   clearExamSession();
@@ -4437,8 +4474,8 @@ function backToStart() {
 }
 
 function renderQuestion() {
-  answered = false;
-  const q = quizSet[current];
+  const q = quizSet[viewIndex];
+  const savedAns = quizAnswers[viewIndex];
   quizCardEl.classList.remove("origin-orig", "origin-new", "origin-extra", "origin-imported");
   quizCardEl.classList.add(
     q.origin === "imported" ? "origin-imported"
@@ -4449,26 +4486,43 @@ function renderQuestion() {
   categoryEl.textContent = q.category;
   questionEl.textContent = q.question;
   choicesEl.innerHTML = "";
-  explainEl.classList.remove("show");
-  nextBtn.classList.remove("show");
 
   q.choices.forEach((choiceText, i) => {
     const btn = document.createElement("button");
     btn.className = "choice";
     btn.textContent = choiceText;
-    btn.addEventListener("click", () => selectChoice(i));
+    if (savedAns) {
+      btn.disabled = true;
+      if (i === q.answer) btn.classList.add("correct");
+      else if (i === savedAns.selected) btn.classList.add("wrong");
+    } else {
+      btn.addEventListener("click", () => selectChoice(i));
+    }
     choicesEl.appendChild(btn);
   });
 
-  progressText.textContent = `${current + 1} / ${quizSet.length}`;
+  if (savedAns) {
+    const wasCorrect = savedAns.selected === q.answer;
+    resultLabelEl.textContent = wasCorrect ? "正解" : "不正解";
+    resultLabelEl.className = "result-label " + (wasCorrect ? "ok" : "ng");
+    explainTextEl.textContent = q.explain;
+    explainEl.classList.add("show");
+    nextBtn.classList.add("show");
+  } else {
+    explainEl.classList.remove("show");
+    nextBtn.classList.remove("show");
+  }
+  prevBtn.classList.toggle("show", viewIndex > 0);
+
+  progressText.textContent = `${viewIndex + 1} / ${quizSet.length}`;
   scoreText.textContent = `正解 ${score}`;
-  barFill.style.width = `${(current / quizSet.length) * 100}%`;
+  barFill.style.width = `${(viewIndex / quizSet.length) * 100}%`;
 }
 
 function selectChoice(i) {
-  if (answered) return;
-  answered = true;
-  const q = quizSet[current];
+  if (quizAnswers[viewIndex]) return;
+  const q = quizSet[viewIndex];
+  quizAnswers[viewIndex] = { selected: i };
   const buttons = choicesEl.querySelectorAll(".choice");
   buttons.forEach((b, idx) => {
     b.disabled = true;
@@ -4502,19 +4556,33 @@ function finishExam() {
   renderWrongList(wrongPanel, wrongList, wrongAnswers);
 }
 
+prevBtn.addEventListener("click", () => {
+  if (viewIndex > 0) {
+    viewIndex--;
+    renderQuestion();
+  }
+});
+
 nextBtn.addEventListener("click", () => {
-  current++;
-  if (current < quizSet.length) {
+  if (viewIndex < current) {
+    // 解答済みの問題を振り返っている途中なので、スコアには影響しない
+    viewIndex++;
     renderQuestion();
   } else {
-    finishExam();
+    current++;
+    viewIndex = current;
+    if (current < quizSet.length) {
+      renderQuestion();
+    } else {
+      finishExam();
+    }
   }
 });
 
 document.getElementById("retryBtn").addEventListener("click", startQuiz);
 document.getElementById("quitBtn").addEventListener("click", () => {
   if (quizSet.length > 0 && current < quizSet.length) {
-    const answeredCount = answered ? current + 1 : current;
+    const answeredCount = quizAnswers[current] ? current + 1 : current;
     const ok = confirm(`ここまで ${answeredCount} / ${quizSet.length} 問に解答済みです(正解 ${score} 問)。\n保存して分野選択画面に戻りますか?`);
     if (!ok) return;
     saveExamSession();
@@ -4802,7 +4870,7 @@ renderCmd();
 /* ============================================================
    頻出問題タブ
    ============================================================ */
-const FREQ_QUESTIONS = [
+const FREQ_SET_A = [
   {
     category: "課題101: システムアーキテクチャ",
     question: "PCの電源を入れてから最初に実行され、ハードウェアの初期化を行うファームウェアはどれか。",
@@ -4841,12 +4909,7 @@ const FREQ_QUESTIONS = [
   {
     category: "課題101: システムアーキテクチャ",
     question: "UEFIがBIOSと比較して持つ特徴として正しいものはどれか。",
-    choices: [
-      "2TBを超える大容量ディスクからの起動に対応している",
-      "テキストベースの設定画面しか持たない",
-      "MBR形式のパーティションにしか対応しない",
-      "16ビット動作モードでのみ動作する"
-    ],
+    choices: ["2TBを超える大容量ディスクからの起動に対応している", "テキストベースの設定画面しか持たない", "MBR形式のパーティションにしか対応しない", "16ビット動作モードでのみ動作する"],
     answer: 0,
     explain: "UEFIはGPT形式のディスクに対応し、2TBを超える大容量ディスクからの起動が可能です。BIOSはMBR形式が基本で容量に制限があります。"
   },
@@ -4862,7 +4925,7 @@ const FREQ_QUESTIONS = [
     question: "systemdでデフォルトのターゲット(旧ランレベルに相当)を確認するコマンドはどれか。",
     choices: ["systemctl get-default", "systemctl list-units", "systemctl daemon-reload", "systemctl isolate"],
     answer: 0,
-    explain: "systemctl get-defaultで起動時に使われるデフォルトターゲットを確認できます。graphical.targetやmulti-user.targetなどが該当します。"
+    explain: "systemctl get-defaultで起動時に使われるデフォルトターゲットを確認できます。variables graphical.targetやmulti-user.targetなどが該当します。"
   },
   {
     category: "課題101: システムアーキテクチャ",
@@ -4972,12 +5035,7 @@ const FREQ_QUESTIONS = [
   {
     category: "課題102: Linuxのインストールとパッケージ管理",
     question: "yumやdnfのようなRPM系高レベルパッケージ管理ツールの特徴として正しいものはどれか。",
-    choices: [
-      "依存関係を自動的に解決してインストールする",
-      "パッケージのファイルを一つずつ手動で配置する",
-      "ソースコードからのビルドしか行えない",
-      "Debian系専用のツールである"
-    ],
+    choices: ["依存関係を自動的に解決してインストールする", "パッケージのファイルを一つずつ手動で配置する", "ソースコードからのビルドしか行えない", "Debian系専用のツールである"],
     answer: 0,
     explain: "yum/dnfはリポジトリ情報を利用し、依存パッケージを自動的に解決してインストールします。rpmコマンド単体では依存解決は行われません。"
   },
@@ -5033,12 +5091,7 @@ const FREQ_QUESTIONS = [
   {
     category: "課題102: Linuxのインストールとパッケージ管理",
     question: "ソースコードからソフトウェアをインストールする際の一般的な手順の順序として正しいものはどれか。",
-    choices: [
-      "./configure → make → make install",
-      "make install → ./configure → make",
-      "make → ./configure → make install",
-      "make install → make → ./configure"
-    ],
+    choices: ["./configure → make → make install", "make install → ./configure → make", "make → ./configure → make install", "make install → make → ./configure"],
     answer: 0,
     explain: "一般的には環境を確認するconfigure、コンパイルするmake、インストールするmake installの順に実行します。"
   },
@@ -5129,12 +5182,7 @@ const FREQ_QUESTIONS = [
   {
     category: "課題103: GNUとUNIXコマンド",
     question: "パイプ(|)の役割として正しいものはどれか。",
-    choices: [
-      "コマンドをバックグラウンドで実行する",
-      "あるコマンドの標準出力を別のコマンドの標準入力に渡す",
-      "コマンドの実行結果をファイルに保存する",
-      "複数のコマンドを同時に並列実行する"
-    ],
+    choices: ["コマンドをバックグラウンドで実行する", "あるコマンドの標準出力を別のコマンドの標準入力に渡す", "コマンドの実行結果をファイルに保存する", "複数のコマンドを同時に並列実行する"],
     answer: 1,
     explain: "パイプは左側のコマンドの標準出力を右側のコマンドの標準入力として接続します。ファイルへの保存はリダイレクト(> や >>)を使います。"
   },
@@ -5246,12 +5294,7 @@ const FREQ_QUESTIONS = [
   {
     category: "課題104: デバイス、Linuxファイルシステム、FHS",
     question: "/etc/fstab の役割として正しいものはどれか。",
-    choices: [
-      "起動時に自動マウントするファイルシステムの情報を定義する",
-      "インストール済みパッケージの一覧を保持する",
-      "ユーザーのパスワード情報を保持する",
-      "ネットワークインターフェースの設定を保持する"
-    ],
+    choices: ["起動時に自動マウントするファイルシステムの情報を定義する", "インストール済みパッケージの一覧を保持する", "ユーザーのパスワード情報を保持する", "ネットワークインターフェースの設定を保持する"],
     answer: 0,
     explain: "/etc/fstabには、起動時にマウントするファイルシステムのデバイス・マウントポイント・種類・オプションなどを定義します。"
   },
@@ -5377,12 +5420,7 @@ const FREQ_QUESTIONS = [
   {
     category: "課題104: デバイス、Linuxファイルシステム、FHS",
     question: "ハードリンクに関する制約として正しいものはどれか。",
-    choices: [
-      "別のファイルシステムをまたいで作成できない",
-      "同じディレクトリ内にしか作成できない",
-      "元ファイルを削除すると必ず参照できなくなる",
-      "テキストファイルにしか作成できない"
-    ],
+    choices: ["別のファイルシステムをまたいで作成できない", "同じディレクトリ内にしか作成できない", "元ファイルを削除すると必ず参照できなくなる", "テキストファイルにしか作成できない"],
     answer: 0,
     explain: "ハードリンクは同じinodeを共有するため、別のファイルシステムをまたいで作成できません。またディレクトリに対しても通常は作成できません。"
   },
@@ -5393,304 +5431,581 @@ const FREQ_QUESTIONS = [
     answer: 0,
     explain: "ln -sでシンボリックリンクを作成します。-sを付けない場合はハードリンクが作成されます。"
   },
-  {
-    category: "課題101: システムアーキテクチャ",
-    question: "デバイスファイルが格納されているディレクトリはどれか。",
-    choices: ["/dev", "/etc", "/var", "/opt"],
-    answer: 0,
-    explain: "/devにはハードディスクやシリアルポートなどのデバイスファイルが格納されています。デバイスドライバはこれらのファイルを通してアクセスされます。"
-  },
-  {
-    category: "課題101: システムアーキテクチャ",
-    question: "システムのシャットダウンを指定した時間後に実行するコマンドはどれか。",
-    choices: ["halt", "shutdown", "reboot", "kill"],
-    answer: 1,
-    explain: "shutdownは時刻や遅延時間を指定してシステムを安全に停止・再起動できます。例えば「shutdown -h +10」で10分後に停止します。"
-  },
-  {
-    category: "課題101: システムアーキテクチャ",
-    question: "ハードウェアの割り込み要求(IRQ)の使用状況を確認できるファイルはどれか。",
-    choices: ["/proc/interrupts", "/proc/meminfo", "/proc/version", "/proc/mounts"],
-    answer: 0,
-    explain: "/proc/interruptsには各デバイスが使用しているIRQ番号と割り込み回数が記録されています。"
-  },
-  {
-    category: "課題101: システムアーキテクチャ",
-    question: "USBデバイスの接続状況を確認するコマンドはどれか。",
-    choices: ["lsusb", "lspci", "lsblk", "lsof"],
-    answer: 0,
-    explain: "lsusbは接続されているUSBデバイスの一覧とその詳細を表示します。lsofは開いているファイルの一覧を表示するコマンドです。"
-  },
-  {
-    category: "課題101: システムアーキテクチャ",
-    question: "接続されたブロックデバイス(ディスク)の一覧をツリー状に表示するコマンドはどれか。",
-    choices: ["lsblk", "lscpu", "lsusb", "lsattr"],
-    answer: 0,
-    explain: "lsblkはブロックデバイスとそのパーティション構成をツリー形式で表示します。マウントポイントも同時に確認できます。"
-  },
-  {
-    category: "課題101: システムアーキテクチャ",
-    question: "CPUの情報(コア数、アーキテクチャなど)を整理して表示するコマンドはどれか。",
-    choices: ["lscpu", "lspci", "lsblk", "lsmod"],
-    answer: 0,
-    explain: "lscpuはCPUのアーキテクチャ、コア数、ソケット数などを整理して表示します。/proc/cpuinfoよりも読みやすい形式です。"
-  },
-  {
-    category: "課題101: システムアーキテクチャ",
-    question: "システムの稼働時間や平均負荷(ロードアベレージ)を確認できるコマンドはどれか。",
-    choices: ["uptime", "date", "cal", "who"],
-    answer: 0,
-    explain: "uptimeはシステムの起動からの経過時間と、直近1分・5分・15分の平均負荷を表示します。"
-  },
-  {
-    category: "課題101: システムアーキテクチャ",
-    question: "システムのメッセージログを一元的に管理するsystemdの仕組みはどれか。",
-    choices: ["journald", "syslog-ng", "rsyslog", "klogd"],
-    answer: 0,
-    explain: "systemd-journald(journald)はカーネルやサービスのログをバイナリ形式で一元管理し、journalctlで参照します。"
-  },
-  {
-    category: "課題101: システムアーキテクチャ",
-    question: "カーネルパラメータを実行時に変更・確認するコマンドはどれか。",
-    choices: ["sysctl", "systemctl", "modprobe", "insmod"],
-    answer: 0,
-    explain: "sysctlは/proc/sys以下のカーネルパラメータを表示・変更します。永続化するには/etc/sysctl.confに記述します。"
-  },
-  {
-    category: "課題101: システムアーキテクチャ",
-    question: "systemdのターゲットのうち、GUIログイン画面まで起動するものはどれか。",
-    choices: ["graphical.target", "multi-user.target", "rescue.target", "poweroff.target"],
-    answer: 0,
-    explain: "graphical.targetはmulti-user.targetに加えてディスプレイマネージャなどGUI関連のサービスも起動します。"
-  },
-  {
-    category: "課題102: Linuxのインストールとパッケージ管理",
-    question: "指定したパッケージが依存しているパッケージを一覧表示するコマンドはどれか。",
-    choices: ["apt-cache search", "apt-cache depends", "apt-cache stats", "apt-get autoclean"],
-    answer: 1,
-    explain: "apt-cache dependsは対象パッケージの依存関係を表示します。逆に「そのパッケージに依存しているもの」はapt-cache rdependsで確認します。"
-  },
-  {
-    category: "課題102: Linuxのインストールとパッケージ管理",
-    question: "ダウンロード済みのパッケージファイルを削除してディスク領域を解放するコマンドはどれか。",
-    choices: ["apt update", "apt clean", "apt autoremove", "apt purge"],
-    answer: 1,
-    explain: "apt cleanは/var/cache/apt/archives配下にキャッシュされた.debファイルを削除します。autoremoveは不要な依存パッケージの削除です。"
-  },
-  {
-    category: "課題102: Linuxのインストールとパッケージ管理",
-    question: "RPMパッケージからファイルを展開して取り出す際に使うコマンドはどれか。",
-    choices: ["rpm2cpio", "rpmbuild", "rpm -e", "rpm -V"],
-    answer: 0,
-    explain: "rpm2cpioでRPMをcpio形式に変換し、cpioコマンドと組み合わせてインストールせずにファイルを取り出せます。"
-  },
-  {
-    category: "課題102: Linuxのインストールとパッケージ管理",
-    question: "物理ボリュームをLVMで利用可能な状態にするコマンドはどれか。",
-    choices: ["pvcreate", "vgcreate", "lvcreate", "mkfs"],
-    answer: 0,
-    explain: "pvcreateは物理ディスクやパーティションをLVMの物理ボリューム(PV)として初期化します。その後vgcreateでボリュームグループを作成します。"
-  },
-  {
-    category: "課題102: Linuxのインストールとパッケージ管理",
-    question: "LVMの論理ボリューム(LV)を作成するコマンドはどれか。",
-    choices: ["lvcreate", "vgcreate", "pvcreate", "lvresize"],
-    answer: 0,
-    explain: "lvcreateはボリュームグループの中に論理ボリュームを作成します。作成後、mkfsでファイルシステムを構築して使用します。"
-  },
-  {
-    category: "課題102: Linuxのインストールとパッケージ管理",
-    question: "GRUB Legacyの設定ファイルとして使われていたものはどれか。",
-    choices: ["/boot/grub/menu.lst", "/boot/grub/grub.cfg", "/etc/default/grub", "/etc/lilo.conf"],
-    answer: 0,
-    explain: "GRUB Legacyでは/boot/grub/menu.lstが設定ファイルでした。GRUB2では/boot/grub/grub.cfgに置き換わっています。"
-  },
-  {
-    category: "課題102: Linuxのインストールとパッケージ管理",
-    question: "コンテナ技術の説明として適切なものはどれか。",
-    choices: [
-      "ホストOSのカーネルを共有しながらプロセスやファイルシステムを分離する",
-      "必ず専用のハードウェアが必要になる",
-      "仮想マシンと全く同じ仕組みでゲストOSを完全に起動する",
-      "ネットワークを利用できない"
-    ],
-    answer: 0,
-    explain: "コンテナはホストOSのカーネルを共有しつつ、namespaceやcgroupsなどの機能でプロセスやリソースを分離する軽量な仮想化技術です。"
-  },
-  {
-    category: "課題102: Linuxのインストールとパッケージ管理",
-    question: "完全仮想化(フル仮想化)の特徴として正しいものはどれか。",
-    choices: [
-      "ゲストOSを一切変更せずにそのまま実行できる",
-      "ゲストOSのカーネルを必ず改変する必要がある",
-      "ホストOSと同じカーネルしか動作しない",
-      "ハードウェアが一切不要になる"
-    ],
-    answer: 0,
-    explain: "完全仮想化はハードウェアを仮想的にエミュレートするため、ゲストOSを変更せずにそのまま動作させられます。準仮想化はゲストOS側の対応が必要です。"
-  },
-  {
-    category: "課題102: Linuxのインストールとパッケージ管理",
-    question: "クラウド環境で仮想マシンを起動する際に使われる、事前設定済みのディスクイメージを指す用語はどれか。",
-    choices: ["テンプレート(イメージ)", "スナップショット", "リビジョン", "パッチ"],
-    answer: 0,
-    explain: "クラウドでは事前に用意されたOSやアプリ構成済みのテンプレート(イメージ)から仮想マシンを起動することが一般的です。"
-  },
-  {
-    category: "課題102: Linuxのインストールとパッケージ管理",
-    question: "rpmパッケージの署名(GPG鍵)を検証するオプションはどれか。",
-    choices: ["--checksig", "--nodeps", "-e", "-U"],
-    answer: 0,
-    explain: "rpm --checksigはパッケージのGPG署名やチェックサムを検証し、改ざんの有無を確認します。"
-  },
-  {
-    category: "課題103: GNUとUNIXコマンド",
-    question: "bashにおいて、直前に実行したコマンドを再度実行するためのショートカット(記号)として正しいものはどれか。",
-    choices: ["!!", "!$", "!-1", "!^"],
-    answer: 0,
-    explain: "「!!」は直前に実行したコマンド全体を再実行します。「!$」は直前のコマンドの最後の引数だけを再利用する記法です。"
-  },
-  {
-    category: "課題103: GNUとUNIXコマンド",
-    question: "ファイル file.txt 内で、行頭が「#」で始まらない(コメントアウトされていない)行のみを表示する正しいコマンドはどれか。",
-    choices: ["grep -v \"^#\" file.txt", "grep -i \"^#\" file.txt", "grep -e \"#$\" file.txt", "grep -n \"#\" file.txt"],
-    answer: 0,
-    explain: "正規表現の「^」は行頭を意味し、-vオプションは指定パターンに一致しない行を表示します。"
-  },
-  {
-    category: "課題103: GNUとUNIXコマンド",
-    question: "ディレクトリ /tmp/backup が存在しない場合、途中の親ディレクトリも含めて再帰的に作成するmkdirのオプションはどれか。",
-    choices: ["-p", "-r", "-a", "-m"],
-    answer: 0,
-    explain: "mkdir -pは中間ディレクトリが存在しない場合でも自動的に作成します。既に存在していてもエラーになりません。"
-  },
-  {
-    category: "課題103: GNUとUNIXコマンド",
-    question: "コマンドの標準出力と標準エラー出力の両方をファイル output.txt に上書き保存する記述として正しいものはどれか。",
-    choices: ["command > output.txt 2>&1", "command 2> output.txt 1>&2", "command >> output.txt 2>&1", "command >& output.txt"],
-    answer: 0,
-    explain: "「> output.txt」で標準出力をファイルへ向け、「2>&1」で標準エラー出力を標準出力と同じ出力先に結合します。"
-  },
-  {
-    category: "課題103: GNUとUNIXコマンド",
-    question: "標準入力からのテキストに含まれる小文字をすべて大文字に変換して表示する正しいtrコマンドはどれか。",
-    choices: ["tr 'a-z' 'A-Z'", "tr -d 'a-z'", "tr -s 'a-z' 'A-Z'", "tr 'A-Z' 'a-z'"],
-    answer: 0,
-    explain: "trは第1引数の文字集合を第2引数の文字集合に置き換えます。'a-z'を'A-Z'に指定すると小文字が大文字に変換されます。"
-  },
-  {
-    category: "課題103: GNUとUNIXコマンド",
-    question: "フォアグラウンドで実行中の処理を一時停止(サスペンド)させるキーボードショートカットはどれか。",
-    choices: ["Ctrl + Z", "Ctrl + C", "Ctrl + D", "Ctrl + A"],
-    answer: 0,
-    explain: "Ctrl+ZはSIGTSTPを送信して処理を一時停止します。Ctrl+Cは処理を中断(SIGINT)、Ctrl+Dは入力終了(EOF)を意味します。"
-  },
-  {
-    category: "課題103: GNUとUNIXコマンド",
-    question: "PIDが1234のプロセスに対して、強制終了シグナル(SIGKILL)を送信して終了させるkillコマンドの実行例として正しいものはどれか。",
-    choices: ["kill -9 1234", "kill -1 1234", "kill -15 -f 1234", "kill --stop 1234"],
-    answer: 0,
-    explain: "kill -9(またはkill -SIGKILL)はプロセスに割り込みの猶予を与えず強制終了させます。-1はSIGHUP、-15はSIGTERM(通常の終了)です。"
-  },
-  {
-    category: "課題103: GNUとUNIXコマンド",
-    question: "grepコマンドで使用する正規表現において、「任意の1文字」を表す記号はどれか。",
-    choices: [".(ドット)", "*(アスタリスク)", "?(クエスチョンマーク)", "+(プラス)"],
-    answer: 0,
-    explain: "基本正規表現(BRE)では「.」が任意の1文字を表します。「*」は直前の文字の0回以上の繰り返しを意味します。"
-  },
-  {
-    category: "課題103: GNUとUNIXコマンド",
-    question: "実行ファイル(バイナリ)、マニュアル(man)、ソースコードの場所をまとめて検索する専用コマンドはどれか。",
-    choices: ["whereis", "which", "locate", "find"],
-    answer: 0,
-    explain: "whereisはバイナリ・マニュアル・ソースコードの場所をまとめて検索します。whichはPATH内の実行ファイルパスのみを検索します。"
-  },
-  {
-    category: "課題103: GNUとUNIXコマンド",
-    question: "ファイル index.html の「行数のみ」をカウントして表示するwcコマンドのオプションはどれか。",
-    choices: ["-l", "-w", "-c", "-m"],
-    answer: 0,
-    explain: "wc -lは行数(lines)のみを数えます。-wは単語数、-cはバイト数、-mは文字数を数えます。"
-  },
-  {
-    category: "課題104: デバイス、Linuxファイルシステム、FHS",
-    question: "ディレクトリのアクセス権限を「所有者:読み・書き・実行」「グループ:読み・実行」「その他:実行のみ」にする場合の8進数3桁表記として正しいものはどれか。",
-    choices: ["751", "755", "741", "710"],
-    answer: 0,
-    explain: "所有者=4+2+1=7、グループ=4+1=5、その他=1(実行のみ)。よって751となります。"
-  },
-  {
-    category: "課題104: デバイス、Linuxファイルシステム、FHS",
-    question: "/dev/sdb1パーティションを/mnt/dataディレクトリに手動でマウントする正しいコマンドはどれか。",
-    choices: ["mount /dev/sdb1 /mnt/data", "mount /mnt/data /dev/sdb1", "mount -a /dev/sdb1 /mnt/data", "attach /dev/sdb1 /mnt/data"],
-    answer: 0,
-    explain: "mountコマンドは「mount [デバイス名] [マウントポイント]」の順で指定します。"
-  },
-  {
-    category: "課題104: デバイス、Linuxファイルシステム、FHS",
-    question: "特定のディレクトリやファイルが占有している「ディスク使用量」を調べるコマンドはどれか。",
-    choices: ["du", "df", "free", "stat"],
-    answer: 0,
-    explain: "du(disk usage)は指定したファイルやディレクトリが実際に占有している容量を計算して表示します。dfはファイルシステム全体の空き状況を表示します。"
-  },
-  {
-    category: "課題104: デバイス、Linuxファイルシステム、FHS",
-    question: "umaskの値が027に設定されている場合、新規作成されたディレクトリのパーミッション(rwx形式)として正しいものはどれか。",
-    choices: ["rwxr-x---", "rwxrwxr--", "rw-r-----", "rwxr-xr-x"],
-    answer: 0,
-    explain: "ディレクトリの初期最大権限は777(rwxrwxrwx)です。777-027=750(rwxr-x---)となります。"
-  },
-  {
-    category: "課題104: デバイス、Linuxファイルシステム、FHS",
-    question: "iノード(inode)に含まれない情報はどれか。",
-    choices: ["ファイル名", "ファイルサイズ", "所有者のUID", "最終更新日時(mtime)"],
-    answer: 0,
-    explain: "iノードにはパーミッション、UID、サイズ、タイムスタンプなどが含まれますが、ファイル名だけはディレクトリブロック側で管理されます。"
-  },
-  {
-    category: "課題104: デバイス、Linuxファイルシステム、FHS",
-    question: "FHSにおいて、ログファイルやメールキューなどの「変化するデータ(可変データ)」を保存する標準的なディレクトリはどれか。",
-    choices: ["/var", "/tmp", "/dev", "/proc"],
-    answer: 0,
-    explain: "/varはvariable(可変)の略で、ログ(/var/log)やスプールなどの変化するデータを扱います。"
-  },
-  {
-    category: "課題104: デバイス、Linuxファイルシステム、FHS",
-    question: "file.txtの所有者をuserA、グループをgroupAに同時に変更するchownコマンドの正しい指定方法はどれか。",
-    choices: ["chown userA:groupA file.txt", "chown userA-groupA file.txt", "chown userA+groupA file.txt", "chown userA/groupA file.txt"],
-    answer: 0,
-    explain: "chownはユーザーとグループをコロン(:)で区切って指定します。ドット(.)による区切りも歴史的にサポートされています。"
-  },
-  {
-    category: "課題104: デバイス、Linuxファイルシステム、FHS",
-    question: "実行ファイルに設定すると、実行時に「ファイル所有者の権限」で動作する特殊権限(SUID)の数値表現はどれか。",
-    choices: ["4000", "2000", "1000", "0777"],
-    answer: 0,
-    explain: "特殊権限の数値はSUID=4000、SGID=2000、スティッキービット=1000です。例: chmod 4755 ファイル名"
-  },
-  {
-    category: "課題104: デバイス、Linuxファイルシステム、FHS",
-    question: "ユーザーやグループごとのディスク使用量制限(ディスククォータ)を扱うコマンド群に含まれないものはどれか。",
-    choices: ["quotaset", "quotacheck", "quotaon", "edquota"],
-    answer: 0,
-    explain: "クォータ関連コマンドにはquotacheck、quotaon、edquota、repquotaなどがあります。quotasetというコマンドは存在しません。"
-  },
-  {
-    category: "課題104: デバイス、Linuxファイルシステム、FHS",
-    question: "ext2/ext3/ext4ファイルシステムのスーパーブロック情報や詳細パラメーターを表示・変更するコマンドはどれか。",
-    choices: ["tune2fs", "dumpe2fs", "e2fsck", "mke2fs"],
-    answer: 0,
-    explain: "tune2fsはマウントカウントの変更やボリュームラベルの設定など、ファイルシステムの設定値を調整・変更(tune)するコマンドです。"
-  }
 ];
 
+const FREQ_SET_B = [
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "PCIバスに接続されているデバイスの情報を一覧表示するコマンドはどれか。",
+    choices: ["lsusb", "lspci", "lsmod", "modprobe"],
+    answer: 1,
+    explain: "lspciはPCIバスに接続されたデバイスを一覧表示する。lsusbはUSB、lsmodはロード済みカーネルモジュール、modprobeはモジュールのロード・アンロードに使用する。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "USBデバイスの情報を一覧表示するコマンドはどれか。",
+    choices: ["lspci", "lsmod", "lsusb", "dmesg"],
+    answer: 2,
+    explain: "lsusbはUSBデバイスを一覧表示する。教材ではlspciと対比して説明されている。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "ロードされているカーネルモジュールの一覧を表示するコマンドはどれか。",
+    choices: ["lsmod", "modprobe", "lspci", "lsusb"],
+    answer: 0,
+    explain: "lsmodは現在ロードされているカーネルモジュールを一覧表示する。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "カーネルモジュールをロード・アンロードするために使用されるコマンドはどれか。",
+    choices: ["lsmod", "modprobe", "lspci", "udev"],
+    answer: 1,
+    explain: "modprobeはカーネルモジュールをロードしたり、必要に応じて依存関係を考慮して処理したりするために使用される。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "CPUに関する詳細情報を確認できるファイルはどれか。",
+    choices: ["/proc/cpuinfo", "/proc/ioports", "/proc/dma", "/sys/cpu"],
+    answer: 0,
+    explain: "/proc/cpuinfoには、OSが検出したCPUに関する詳細情報が含まれる。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "CPUごとのI/Oデバイスが使用する割り込み番号を確認するファイルはどれか。",
+    choices: ["/proc/dma", "/proc/interrupts", "/proc/ioports", "/proc/cpuinfo"],
+    answer: 1,
+    explain: "/proc/interruptsには、CPUごとのI/Oデバイスが使用する割り込み番号の一覧が含まれる。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "現在登録されているI/Oポート領域の一覧を確認するファイルはどれか。",
+    choices: ["/proc/ioports", "/proc/interrupts", "/proc/dma", "/proc/ports"],
+    answer: 0,
+    explain: "/proc/ioportsは現在登録されている入出力ポート領域を一覧表示する。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "使用中のDMAチャネルを確認するファイルはどれか。",
+    choices: ["/proc/dma", "/proc/memory", "/proc/ioports", "/sys/dma"],
+    answer: 0,
+    explain: "/proc/dmaには使用中の登録済みDMA（ダイレクトメモリアクセス）チャネルの情報が含まれる。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "Linuxにおいて、/procと/sysについて正しい説明はどれか。",
+    choices: ["どちらも通常のディスク上のファイルシステムである", "カーネルが使用する疑似ファイルシステムである", "/procだけがデバイス情報を扱う", "/sysだけがプロセス情報を扱う"],
+    answer: 1,
+    explain: "/procと/sysは、カーネルが使用するメモリ上の疑似ファイルシステムへのマウントポイントで、通常のストレージ上に保存されるものではない。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "/procと/sysの役割について正しいものはどれか。",
+    choices: ["/sysはハードウェア関連のデバイス情報やカーネルデータに特化している", "/procはUSB専用である", "/sysはユーザーのホームディレクトリを管理する", "/procは通常のログファイルだけを格納する"],
+    answer: 0,
+    explain: "教材では、/sysはハードウェア関連のデバイス情報とカーネルデータを扱うことに特化し、/procはプロセス情報やさまざまなカーネル構成データも扱うと説明されている。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "Linuxでデバイスファイルが配置されるディレクトリはどれか。",
+    choices: ["/etc", "/proc", "/dev", "/sys"],
+    answer: 2,
+    explain: "/devにはシステムデバイス、特にストレージデバイスに関連付けられたデバイスファイルが配置される。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "IDEハードディスクを表す従来型のデバイスファイルとして教材で例示されているものはどれか。",
+    choices: ["/dev/sda", "/dev/hda", "/dev/ide0", "/sys/hda"],
+    answer: 1,
+    explain: "教材では、マザーボードの最初のIDEチャネルに接続されたレガシーIDEハードドライブを/dev/hdaで表す例が示されている。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "レガシーIDEディスク/dev/hdaの最初のパーティションを表すデバイスファイルはどれか。",
+    choices: ["/dev/hda0", "/dev/hda1", "/dev/hda-a", "/dev/partition1"],
+    answer: 1,
+    explain: "教材ではディスク内のパーティションを/dev/hda1、/dev/hda2のように末尾の数字で表す例が示されている。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "リムーバブルデバイスが接続された際、対応するデバイスを/devに作成する仕組みに関係するものはどれか。",
+    choices: ["udev", "cron", "init", "grub"],
+    answer: 0,
+    explain: "教材では、リムーバブルデバイスはudevサブシステムによって処理され、それぞれに対応するデバイスが/devに作成されると説明されている。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "lspciの出力で「kernel driver in use」が示すものは何か。",
+    choices: ["使用中のファイルシステム", "使用中のカーネルモジュール", "使用中のユーザー", "使用中のUSBポート"],
+    answer: 1,
+    explain: "教材の例では、NVIDIA GPUについて「kernel driver in use: nvidia」と表示され、使用中のモジュールがnvidiaであることを示している。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "指定したPCIデバイスについて、使用中のカーネルドライバなどを確認する際に使えるlspciのオプションはどれか。",
+    choices: ["-k", "-u", "-m", "-d"],
+    answer: 0,
+    explain: "教材では、指定したデバイスでどのカーネルモジュールが使用されているかを確認する方法としてlspci -s <デバイス> -kが紹介されている。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "Linuxカーネルのハードウェア情報を調査するコマンドの組み合わせとして正しいものはどれか。",
+    choices: ["lspci、lsusb、lsmod", "grep、sed、awk", "tar、gzip、zip", "ps、top、kill"],
+    answer: 0,
+    explain: "教材のまとめでは、検出されたハードウェアを調査するコマンドとしてlspciとlsusb、カーネルモジュールを管理・確認するコマンドとしてlsmodとmodprobeが挙げられている。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "Linuxのハードウェア設定について、BIOS/UEFI設定が影響するものはどれか。",
+    choices: ["OSがハードウェアを扱う方法", "ユーザーのパスワードだけ", "シェルスクリプトの文法", "テキストファイルの文字コードだけ"],
+    answer: 0,
+    explain: "教材では、BIOSまたはUEFI構成ユーティリティでの設定が、OSがハードウェアを扱う方法に影響すると説明されている。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "システムに2台目のSATAディスクを追加した後に起動できなくなった場合、教材の演習解答で示されている可能性のある原因はどれか。",
+    choices: ["シェルの履歴が壊れた", "BIOSのブートデバイス順序が適切でない", "/tmpの容量不足", "USBドライバが無効になった"],
+    answer: 1,
+    explain: "教材では、BIOSセットアップユーティリティでブートデバイスの順序を設定しないと、BIOSがブートローダーを実行できない場合があると説明されている。"
+  },
+  {
+    category: "課題101: システムアーキテクチャ",
+    question: "BIOS/UEFIからLinuxの起動完了までの流れとして最も適切なものはどれか。",
+    choices: ["ブートローダー→BIOS/UEFI→カーネル→init", "BIOS/UEFI→ブートローダー→カーネル→システム初期化", "カーネル→BIOS/UEFI→ブートローダー→init", "init→カーネル→BIOS/UEFI→ブートローダー"],
+    answer: 1,
+    explain: "教材では、BIOS/UEFIなどのファームウェアがブートローダーをロードし、ブートローダーがカーネルをロードする。その後カーネルがハードウェアを識別・構成し、システムサービスの開始・管理を担当する仕組みへ進むと説明されている。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "LVMにおいて、物理ボリューム（PV）をまとめて構成するものはどれか。",
+    choices: ["論理ボリューム（LV）", "ボリュームグループ（VG）", "マウントポイント", "スワップ領域"],
+    answer: 1,
+    explain: "LVMでは複数の物理ボリューム（PV）をボリュームグループ（VG）にまとめ、その中から論理ボリューム（LV）を作成する。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "LVMのボリュームグループ内で、最小単位となるものはどれか。",
+    choices: ["セクター", "パーティション", "エクステント", "ブロックデバイス"],
+    answer: 2,
+    explain: "教材では、ボリュームグループを構成する物理ボリュームが固定サイズの「エクステント」に分割されると説明されている。デフォルトは4M。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "論理ボリュームの実際のサイズはどのように定義されるか。",
+    choices: ["ディスク容量÷パーティション数", "物理エクステントのサイズ×論理ボリューム内のエクステント数", "RAM容量×2", "ファイルシステムの種類だけで決まる"],
+    answer: 1,
+    explain: "教材の演習解答では、物理エクステントのサイズに論理ボリューム内のエクステント数を掛けたものと説明されている。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "UEFIシステムでブートローダーやカーネルイメージを格納するために使用されるパーティションはどれか。",
+    choices: ["swap", "EFIシステムパーティション（ESP）", "/home", "/var"],
+    answer: 1,
+    explain: "ESPはUEFI搭載マシンでブートローダーとカーネルイメージを格納するために使用される。Linuxでは通常 /boot/efi にマウントされる。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "MBRパーティションスキームにおけるEFIシステムパーティションのIDはどれか。",
+    choices: ["0x82", "0x83", "0xEF", "0xFF"],
+    answer: 2,
+    explain: "教材では、MBR上でESPに割り当てられるパーティションIDは0xEFと説明されている。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "LinuxでEFIシステムパーティション（ESP）が通常マウントされる場所はどれか。",
+    choices: ["/efi", "/boot/efi", "/mnt/efi", "/usr/efi"],
+    answer: 1,
+    explain: "教材では、LinuxシステムではESPを /boot/efi の下にマウントすると説明されている。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "Linuxのスワップ領域をパーティション以外の方法で増やす場合、教材で示されている方法はどれか。",
+    choices: ["swapファイルを作成して登録する", "/homeを削除する", "/procを拡張する", "GRUBを再インストールする"],
+    answer: 0,
+    explain: "教材の演習解答では、スワップパーティションに加えて、スワップ用のファイルを作成して登録する方法が示されている。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "GRUB 2の設定で、デフォルトのメニューエントリを起動する前に10秒待機させるには、どれを設定するか。",
+    choices: ["GRUB_DELAY=10", "GRUB_TIMEOUT=10", "GRUB_WAIT=10", "GRUB_BOOT_DELAY=10"],
+    answer: 1,
+    explain: "/etc/default/grub に GRUB_TIMEOUT=10 を設定する。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "GRUB 2の設定ファイルを生成・更新するコマンドはどれか。",
+    choices: ["grub-mkconfig", "grub-query", "grub-update-config", "grub-create"],
+    answer: 0,
+    explain: "教材の102.2ではgrub-mkconfigがGRUB 2の設定生成に使われるコマンドとして扱われている。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "GRUBをインストールするためのコマンドとして教材で扱われているものはどれか。",
+    choices: ["grub-install", "grub-setup-install", "install-grub2", "bootloader-install"],
+    answer: 0,
+    explain: "grub-installはGRUBを指定した場所にインストールするために使用する。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "共有ライブラリのファイル名に含まれる「so」は何を表すか。",
+    choices: ["system object", "shared object", "system output", "shared operation"],
+    answer: 1,
+    explain: "教材では、soは「shared object」の略として説明されている。例えばlibpthread.so.0のような名前になる。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "静的ライブラリの一般的な拡張子はどれか。",
+    choices: [".so", ".a", ".libso", ".dll"],
+    answer: 1,
+    explain: "教材では、静的ライブラリは.aで終わる名前（例：libpthread.a）として説明されている。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "実行可能ファイルが必要とする共有ライブラリを調べるコマンドはどれか。",
+    choices: ["ldconfig", "ldd", "ldpath", "libcheck"],
+    answer: 1,
+    explain: "lddはプログラムが依存する共有ライブラリを表示する。例えば「ldd /bin/kill」のように使用する。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "新しい共有ライブラリのパスを設定ファイルに追加した後、共有ライブラリに必要なリンクを作成するコマンドはどれか。",
+    choices: ["ldd", "ldconfig", "ldpath", "linklib"],
+    answer: 1,
+    explain: "ldconfigは共有ライブラリに必要なリンクを作成する。教材では /etc/ld.so.conf.d に設定を追加した後に使用する例がある。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "現在のシェルセッションで共有ライブラリの検索パスを追加する環境変数はどれか。",
+    choices: ["PATH", "LIB_PATH", "LD_LIBRARY_PATH", "SO_PATH"],
+    answer: 2,
+    explain: "LD_LIBRARY_PATHは共有ライブラリに対する環境変数。教材では export LD_LIBRARY_PATH=/usr/local/mylib の例が示されている。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "Debian系システムで、ローカルのパッケージインデックスを更新するコマンドはどれか。",
+    choices: ["apt-get update", "apt-get refresh", "dpkg --update", "apt-cache update"],
+    answer: 0,
+    explain: "apt-get updateは、/etc/apt/で設定されたリポジトリと一致するようにローカルのパッケージインデックスを更新する。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "Debianパッケージファイルをdpkgでインストールするコマンドはどれか。",
+    choices: ["dpkg -r package.deb", "dpkg -i package.deb", "dpkg -L package.deb", "dpkg -q package.deb"],
+    answer: 1,
+    explain: "dpkg -iは1つ以上のパッケージファイルをインストールする。-rはインストール済みパッケージの削除に使う。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "Debian系で、指定したパッケージの詳細情報を表示するコマンドはどれか。",
+    choices: ["apt-cache show", "apt-cache remove", "dpkg-show", "apt-info"],
+    answer: 0,
+    explain: "apt-cache showはパッケージインデックスに基づき、指定したパッケージの詳細を表示する。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "RPMパッケージをインストールする基本的なコマンドはどれか。",
+    choices: ["rpm -i パッケージ名", "rpm -r パッケージ名", "rpm -d パッケージ名", "rpm -s パッケージ名"],
+    answer: 0,
+    explain: "rpm -iはRPMパッケージをインストールする。教材ではrpm -ihのように-hを付けて進行状況のhash marksを表示する例もある。"
+  },
+  {
+    category: "課題102: Linuxのインストールとパッケージ管理",
+    question: "RPMパッケージについて、ファイル /etc/redhat-release がどのパッケージに属するかを調べるコマンドはどれか。",
+    choices: ["rpm -qa /etc/redhat-release", "rpm -qf /etc/redhat-release", "rpm -ql /etc/redhat-release", "rpm -qi /etc/redhat-release"],
+    answer: 1,
+    explain: "rpm -qfは指定したファイルがどのパッケージに属するかを調べる。教材の演習でもrpm -qf /etc/redhat-releaseが答えとして示されている。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "現在設定されている環境変数を表示するコマンドはどれか。",
+    choices: ["env", "pwd", "jobs", "history"],
+    answer: 0,
+    explain: "envは環境を定義する変数の値を表示するために使用できる。教材の103.1では環境変数の検索方法としてenvが扱われている。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "現在のシェルで環境変数PATHに値を追加する方法として正しいものはどれか。",
+    choices: ["PATH+=/usr/local/bin", "export PATH=$PATH:/usr/local/bin", "set PATH /usr/local/bin", "env PATH /usr/local/bin"],
+    answer: 1,
+    explain: "PATHはコロン区切りでコマンド検索パスを指定する環境変数。exportを使うことで子プロセスにも環境変数として渡せる。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "コマンド履歴を表示するコマンドはどれか。",
+    choices: ["history", "recall", "commands", "hist"],
+    answer: 0,
+    explain: "historyはシェルのコマンド履歴を表示する。教材ではhistory 20のように直近20件を表示する例がある。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "grepで大文字と小文字を区別せずに検索するオプションはどれか。",
+    choices: ["-v", "-i", "-n", "-r"],
+    answer: 1,
+    explain: "-iは大文字・小文字を区別しない検索を指定する。教材の103.2でもこの用途が説明されている。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "grepで拡張正規表現を使用するオプションはどれか。",
+    choices: ["-E", "-F", "-X", "-R"],
+    answer: 0,
+    explain: "-Eは拡張正規表現を使用する。教材では「|」をOR検索として使う例でgrep -Eが扱われている。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "ファイルの末尾から指定した行数を表示するコマンドはどれか。",
+    choices: ["head", "tail", "last", "bottom"],
+    answer: 1,
+    explain: "tailはファイルの最新の行、つまり末尾側を表示する。-nで表示する行数を指定できる。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "テキストをパイプから受け取り、行数・単語数・文字数を数えるコマンドはどれか。",
+    choices: ["count", "wc", "stat", "size"],
+    answer: 1,
+    explain: "wcは入力されたテキストの行数、単語数、文字数などを数える。wc -lなら行数だけを数える。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "次のコマンドの動作として正しいものはどれか。cat /proc/cpuinfo | wc",
+    choices: ["/proc/cpuinfoを削除する", "catの出力をwcの標準入力へ渡す", "wcの出力をcatへ渡す", "2つのコマンドを順番に実行するだけ"],
+    answer: 1,
+    explain: "縦棒「|」はパイプ。左側コマンドの標準出力を右側コマンドの標準入力へ接続する。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "findで/home/frank/Documents以下のディレクトリだけを検索するコマンドはどれか。",
+    choices: ["find /home/frank/Documents -type d", "find /home/frank/Documents -dir", "find /home/frank/Documents -directory", "find -d /home/frank/Documents"],
+    answer: 0,
+    explain: "-type dはディレクトリを検索する指定。教材でも同じ形式の例が示されている。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "findで「.backup」で終わるファイルを検索するコマンドとして正しいものはどれか。",
+    choices: ["find /var -name \"*.backup\"", "find /var -type \".backup\"", "find /var -end \"*.backup\"", "find /var -file \"*.backup\""],
+    answer: 0,
+    explain: "-nameでファイル名を指定する。*は任意の文字列に一致するため、\"*.backup\"で末尾が.backupのファイルを検索できる。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "findで100Mより大きく1000Mより小さい.backupファイルを削除する例として教材に示されているコマンドはどれか。",
+    choices: ["find /var -name \"*.backup\" -size +100M -size -1000M -delete", "rm /var \"*.backup\" -size 100M", "find /var -delete \"*.backup\" -size 100M", "delete /var -name \"*.backup\""],
+    answer: 0,
+    explain: "教材では-name、-size、-deleteを組み合わせた例が示されている。findの検索結果に対して削除操作を行う形。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "tarでファイルをアーカイブし、gzip形式で圧縮するために必要なオプションはどれか。",
+    choices: ["-z", "-j", "-x", "-t"],
+    answer: 0,
+    explain: "-zはgzipによる圧縮・展開を指定する。教材ではtar -zcvf ... .tar.gzの例が示されている。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "tarアーカイブを作成するときに使用するオプションはどれか。",
+    choices: ["-c", "-x", "-d", "-p"],
+    answer: 0,
+    explain: "-cは新しいアーカイブを作成する。-xは既存アーカイブからファイルを取り出す展開操作。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "標準出力をファイルに書き込み、既存ファイルがあれば上書きするリダイレクトはどれか。",
+    choices: [">", ">>", "<", "|"],
+    answer: 0,
+    explain: ">は標準出力をファイルへリダイレクトし、通常は既存ファイルを上書きする。>>は末尾に追加する。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "あるコマンドの標準出力を別のコマンドの標準入力へ接続する記号はどれか。",
+    choices: [">", ">>", "|", "<"],
+    answer: 2,
+    explain: "パイプ「|」は左側コマンドの出力を右側コマンドの入力へ直接接続する。教材の103.4の中心的な内容。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "標準出力を画面に表示しながら、同時にファイルにも保存するコマンドはどれか。",
+    choices: ["tee", "split", "save", "pipe"],
+    answer: 0,
+    explain: "teeは標準入力を標準出力へ送りつつ、指定したファイルにも書き込む。教材ではstdoutとファイルの両方に出力を送る用途として扱われている。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "停止中のジョブをバックグラウンドで再開するコマンドはどれか。",
+    choices: ["fg", "bg", "jobs", "wait"],
+    answer: 1,
+    explain: "bgはジョブをバックグラウンドに移動して実行を継続する。fgはフォアグラウンドへ戻す。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "バックグラウンドジョブの一覧と状態を確認するコマンドはどれか。",
+    choices: ["ps", "jobs", "tasklist", "bg"],
+    answer: 1,
+    explain: "jobsはシェルが管理しているジョブとその状態を表示する。教材ではsleepをCtrl+Zで停止し、jobsで確認する例がある。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "プロセスの状態をリアルタイムに動的表示するコマンドはどれか。",
+    choices: ["ps", "top", "jobs", "pgrep"],
+    answer: 1,
+    explain: "教材ではtopはプロセス状態を動的に表示し、psはその時点のプロセス状態を静的に表示すると説明されている。"
+  },
+  {
+    category: "課題103: GNUとUNIXコマンド",
+    question: "実行中のプロセスの優先度を変更するために使用するコマンドはどれか。",
+    choices: ["renice", "repriority", "nicechange", "priority"],
+    answer: 0,
+    explain: "reniceは実行中のプロセスのnice値を変更する。教材ではPIDを指定して変更後のnice値を設定する例が示されている。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "MBRパーティションテーブルを作成・編集するコマンドはどれか。",
+    choices: ["fdisk", "gdisk", "mkfs", "mkswap"],
+    answer: 0,
+    explain: "fdiskはMBRパーティションテーブルの作成やパーティションの作成・削除に使用する。教材ではgdiskがGPT用として対比されている。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "GPTパーティションテーブルを扱うコマンドはどれか。",
+    choices: ["fdisk", "gdisk", "fsck", "tune2fs"],
+    answer: 1,
+    explain: "gdiskはGPTパーティションテーブルの作成やパーティションの作成・削除に使用する。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "ext4ファイルシステムを作成するコマンドはどれか。",
+    choices: ["mkfs.ext4", "fsck.ext4", "ext4mk", "make.ext4"],
+    answer: 0,
+    explain: "mkfs.ext4はext4ファイルシステムを作成する。教材ではext2、ext3、ext4、XFS、VFAT、exFATなどの作成方法が扱われている。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "スワップ領域を作成・設定するためのコマンドはどれか。",
+    choices: ["swapon", "mkswap", "mkfs.swap", "swapinit"],
+    answer: 1,
+    explain: "mkswapはスワップ領域を設定する。作成したスワップを有効化する場合はswaponを使用する。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "ファイルシステムの整合性をチェック・修復するための汎用コマンドはどれか。",
+    choices: ["fsck", "df", "du", "mount"],
+    answer: 0,
+    explain: "fsckはファイルシステムの整合性を確認・修復するためのコマンド。教材の104.2で中心的に扱われている。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "ext2/ext3/ext4ファイルシステムのチェックに使用するコマンドはどれか。",
+    choices: ["e2fsck", "xfs_repair", "tune2fs", "mke2fs"],
+    answer: 0,
+    explain: "e2fsckはext2、ext3、ext4ファイルシステムを対象とする。教材ではe2fsck -p /dev/sdc1で自動的にエラーを修復する例が示されている。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "XFSファイルシステムを修復せずにエラーチェックするコマンドはどれか。",
+    choices: ["xfs_repair -n /dev/sdb1", "xfs_repair -p /dev/sdb1", "e2fsck -n /dev/sdb1", "fsck -repair /dev/sdb1"],
+    answer: 0,
+    explain: "教材ではxfs_repairに-nオプションを指定すると修復せずにエラーチェックできると説明されている。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "ファイルシステムの空き容量などを確認するコマンドはどれか。",
+    choices: ["df", "du", "free", "fsck"],
+    answer: 0,
+    explain: "dfはファイルシステム単位の使用量・空き容量などを表示する。duはファイルやディレクトリが使用している容量を調べる。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "ファイルやディレクトリが使用しているディスク容量を確認するコマンドはどれか。",
+    choices: ["df", "du", "lsblk", "mount"],
+    answer: 1,
+    explain: "duはファイルやディレクトリのディスク使用量を確認する。dfとの違いは頻出ポイント。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "/dev/sdc1のext4ファイルシステムを/mnt/externalに読み取り専用でマウントするコマンドとして正しいものはどれか。",
+    choices: ["mount -t ext4 -o noatime,async,ro /dev/sdc1 /mnt/external", "mount -x ext4 /dev/sdc1 /mnt/external", "mount -r ext4 /dev/sdc1", "umount -t ext4 /dev/sdc1 /mnt/external"],
+    answer: 0,
+    explain: "教材の演習解答に示されている形式。-tでファイルシステムタイプ、-oでマウントオプションを指定する。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "マウント済みのファイルシステムをアンマウントするコマンドはどれか。",
+    choices: ["unmount", "umount", "detach", "mount -u"],
+    answer: 1,
+    explain: "umountはファイルシステムをアンマウントするコマンド。教材ではmountと対になる基本コマンドとして扱われている。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "/etc/fstabのエントリで、mount -aによる自動マウントを行わないようにするオプションはどれか。",
+    choices: ["noauto", "noatime", "nouser", "async"],
+    answer: 0,
+    explain: "教材の演習ではnoautoが指定されたファイルシステムはmount -aではマウントされないと説明されている。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "/dev/sdb1のファイルシステムのUUIDを表示するコマンドはどれか。",
+    choices: ["lsblk -f /dev/sdb1", "uuid /dev/sdb1", "mount --uuid /dev/sdb1", "ls -uuid /dev/sdb1"],
+    answer: 0,
+    explain: "教材の演習解答ではlsblk -f /dev/sdb1が示されている。lsblk -fはファイルシステムのタイプやUUIDなどを確認できる。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "「target is busy」でアンマウントできないファイルシステムに、どのプロセスがアクセスしているか確認するコマンドはどれか。",
+    choices: ["lsof", "psfs", "busy", "mountstat"],
+    answer: 0,
+    explain: "教材ではlsof /dev/sdd2のように実行して、そのファイルシステムにアクセスしているプロセスを調べる方法が示されている。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "ファイルやディレクトリの所有者と所有グループを変更するコマンドはどれか。",
+    choices: ["chmod", "chown", "chgrp", "umask"],
+    answer: 1,
+    explain: "chownは所有者と所有グループを変更する。chgrpは所有グループだけを変更する。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "ファイルやディレクトリのアクセス権を変更するコマンドはどれか。",
+    choices: ["chmod", "chown", "chgrp", "umask"],
+    answer: 0,
+    explain: "chmodはパーミッションを変更する。教材では数値表記と記号表記の両方が扱われている。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "ファイル作成時のデフォルトパーミッションを確認・変更するコマンドはどれか。",
+    choices: ["umask", "chmod -d", "mask", "defaultperm"],
+    answer: 0,
+    explain: "umaskはファイルやディレクトリのデフォルトパーミッションを確認・設定する。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "ハードリンクを作成するコマンドはどれか。",
+    choices: ["ln", "ln -s", "link -s", "hardlink -s"],
+    answer: 0,
+    explain: "ln ファイル名 リンク名でハードリンクを作成できる。教材ではハードリンクがターゲットと同じinodeを指すことも説明されている。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "シンボリックリンクを作成するコマンドはどれか。",
+    choices: ["ln", "ln -s", "symlink", "link -h"],
+    answer: 1,
+    explain: "ln -sでシンボリックリンクを作成する。教材では、シンボリックリンクはパスを指し、別ファイルシステム上のファイルやディレクトリも指せると説明されている。"
+  },
+  {
+    category: "課題104: デバイス、Linuxファイルシステム、FHS",
+    question: "FHSに沿ったファイルやコマンドの場所を調べるコマンドの組み合わせとして正しいものはどれか。",
+    choices: ["find、locate、which、whereis、type", "grep、sed、awk、cut、sort", "mount、umount、fsck、mkswap、swapon", "chmod、chown、chgrp、umask、ln"],
+    answer: 0,
+    explain: "104.7ではfind、locate、updatedb、which、whereis、typeが扱われる。findは条件に基づく検索、locateはデータベース検索、whichは実行可能ファイルのパス、whereisは実行ファイル・man・ソースの場所、typeはコマンドの種類や場所を確認する。"
+  },
+];
+
+const FREQ_QUESTIONS = [...FREQ_SET_A, ...FREQ_SET_B];
+
+const freqQuizCardEl = document.getElementById("freqQuizCard");
 const freqCategoryEl = document.getElementById("freqCategory");
 const freqQuestionEl = document.getElementById("freqQuestion");
 const freqChoicesEl = document.getElementById("freqChoices");
 const freqExplainEl = document.getElementById("freqExplain");
 const freqExplainTextEl = document.getElementById("freqExplainText");
 const freqResultLabelEl = document.getElementById("freqResultLabel");
+const freqPrevBtn = document.getElementById("freqPrevBtn");
 const freqNextBtn = document.getElementById("freqNextBtn");
 const freqProgressText = document.getElementById("freqProgressText");
 const freqScoreText = document.getElementById("freqScoreText");
@@ -5712,9 +6027,10 @@ let freqSelectedCats = new Set();
 let freqSelectedCount = 20;
 let freqQuizSet = [];
 let freqCurrent = 0;
+let freqViewIndex = 0;
 let freqScore = 0;
-let freqAnswered = false;
 let freqWrongAnswers = [];
+let freqQuizAnswers = [];
 
 /* ---- 中断・再開(頻出問題) ---- */
 const FREQ_SESSION_KEY = "lpic101_freq_session_v1";
@@ -5725,12 +6041,13 @@ const freqResumeDiscardBtn = document.getElementById("freqResumeDiscardBtn");
 
 function saveFreqSession() {
   try {
-    const resumeAt = freqAnswered ? freqCurrent + 1 : freqCurrent;
+    const resumeAt = freqQuizAnswers[freqCurrent] ? freqCurrent + 1 : freqCurrent;
     localStorage.setItem(FREQ_SESSION_KEY, JSON.stringify({
       ids: freqQuizSet.map(qid),
       current: resumeAt,
       score: freqScore,
-      wrongIds: freqWrongAnswers.map(qid)
+      wrongIds: freqWrongAnswers.map(qid),
+      answers: freqQuizAnswers.map(a => (a ? a.selected : null))
     }));
   } catch (e) { /* ignore */ }
 }
@@ -5793,8 +6110,10 @@ function startFreqQuiz() {
   const pool = shuffle(FREQ_QUESTIONS.filter(q => freqSelectedCats.has(q.category)));
   freqQuizSet = freqSelectedCount === "全部" ? pool : pool.slice(0, freqSelectedCount);
   freqCurrent = 0;
+  freqViewIndex = 0;
   freqScore = 0;
   freqWrongAnswers = [];
+  freqQuizAnswers = [];
   freqStartArea.style.display = "none";
   freqFinishArea.style.display = "none";
   freqQuizArea.style.display = "block";
@@ -5804,9 +6123,14 @@ function startFreqQuiz() {
 function resumeFreqQuiz() {
   const saved = loadFreqSession();
   if (!saved) { renderFreqResume(); return; }
-  const restored = saved.ids.map(id => ALL_QUESTIONS_BY_ID.get(id)).filter(Boolean);
-  freqQuizSet = restored;
+  const savedAnswers = saved.answers || [];
+  const pairs = saved.ids
+    .map((id, i) => ({ q: ALL_QUESTIONS_BY_ID.get(id), sel: savedAnswers[i] }))
+    .filter(p => p.q);
+  freqQuizSet = pairs.map(p => p.q);
+  freqQuizAnswers = pairs.map(p => (p.sel === null || p.sel === undefined ? null : { selected: p.sel }));
   freqCurrent = Math.min(saved.current, freqQuizSet.length);
+  freqViewIndex = freqCurrent;
   freqScore = saved.score;
   freqWrongAnswers = (saved.wrongIds || []).map(id => ALL_QUESTIONS_BY_ID.get(id)).filter(Boolean);
   clearFreqSession();
@@ -5828,31 +6152,52 @@ function backToFreqStart() {
 }
 
 function renderFreqQuestion() {
-  freqAnswered = false;
-  const q = freqQuizSet[freqCurrent];
+  const q = freqQuizSet[freqViewIndex];
+  const savedAns = freqQuizAnswers[freqViewIndex];
+  freqQuizCardEl.classList.remove("origin-imported");
+  if (q.origin === "imported") {
+    freqQuizCardEl.classList.add("origin-imported");
+  }
   freqCategoryEl.textContent = q.category;
   freqQuestionEl.textContent = q.question;
   freqChoicesEl.innerHTML = "";
-  freqExplainEl.classList.remove("show");
-  freqNextBtn.classList.remove("show");
 
   q.choices.forEach((choiceText, i) => {
     const btn = document.createElement("button");
     btn.className = "choice";
     btn.textContent = choiceText;
-    btn.addEventListener("click", () => selectFreqChoice(i));
+    if (savedAns) {
+      btn.disabled = true;
+      if (i === q.answer) btn.classList.add("correct");
+      else if (i === savedAns.selected) btn.classList.add("wrong");
+    } else {
+      btn.addEventListener("click", () => selectFreqChoice(i));
+    }
     freqChoicesEl.appendChild(btn);
   });
 
-  freqProgressText.textContent = `${freqCurrent + 1} / ${freqQuizSet.length}`;
+  if (savedAns) {
+    const wasCorrect = savedAns.selected === q.answer;
+    freqResultLabelEl.textContent = wasCorrect ? "正解" : "不正解";
+    freqResultLabelEl.className = "result-label " + (wasCorrect ? "ok" : "ng");
+    freqExplainTextEl.textContent = q.explain;
+    freqExplainEl.classList.add("show");
+    freqNextBtn.classList.add("show");
+  } else {
+    freqExplainEl.classList.remove("show");
+    freqNextBtn.classList.remove("show");
+  }
+  freqPrevBtn.classList.toggle("show", freqViewIndex > 0);
+
+  freqProgressText.textContent = `${freqViewIndex + 1} / ${freqQuizSet.length}`;
   freqScoreText.textContent = `正解 ${freqScore}`;
-  freqBarFill.style.width = `${(freqCurrent / freqQuizSet.length) * 100}%`;
+  freqBarFill.style.width = `${(freqViewIndex / freqQuizSet.length) * 100}%`;
 }
 
 function selectFreqChoice(i) {
-  if (freqAnswered) return;
-  freqAnswered = true;
-  const q = freqQuizSet[freqCurrent];
+  if (freqQuizAnswers[freqViewIndex]) return;
+  const q = freqQuizSet[freqViewIndex];
+  freqQuizAnswers[freqViewIndex] = { selected: i };
   const buttons = freqChoicesEl.querySelectorAll(".choice");
   buttons.forEach((b, idx) => {
     b.disabled = true;
@@ -5886,19 +6231,32 @@ function finishFreqQuiz() {
   renderWrongList(freqWrongPanel, freqWrongList, freqWrongAnswers);
 }
 
+freqPrevBtn.addEventListener("click", () => {
+  if (freqViewIndex > 0) {
+    freqViewIndex--;
+    renderFreqQuestion();
+  }
+});
+
 freqNextBtn.addEventListener("click", () => {
-  freqCurrent++;
-  if (freqCurrent < freqQuizSet.length) {
+  if (freqViewIndex < freqCurrent) {
+    freqViewIndex++;
     renderFreqQuestion();
   } else {
-    finishFreqQuiz();
+    freqCurrent++;
+    freqViewIndex = freqCurrent;
+    if (freqCurrent < freqQuizSet.length) {
+      renderFreqQuestion();
+    } else {
+      finishFreqQuiz();
+    }
   }
 });
 
 document.getElementById("freqRetryBtn").addEventListener("click", startFreqQuiz);
 document.getElementById("freqQuitBtn").addEventListener("click", () => {
   if (freqQuizSet.length > 0 && freqCurrent < freqQuizSet.length) {
-    const answeredCount = freqAnswered ? freqCurrent + 1 : freqCurrent;
+    const answeredCount = freqQuizAnswers[freqCurrent] ? freqCurrent + 1 : freqCurrent;
     const ok = confirm(`ここまで ${answeredCount} / ${freqQuizSet.length} 問に解答済みです(正解 ${freqScore} 問)。\n保存して分野選択画面に戻りますか?`);
     if (!ok) return;
     saveFreqSession();
@@ -5968,6 +6326,7 @@ const weakChoicesEl = document.getElementById("weakChoices");
 const weakExplainEl = document.getElementById("weakExplain");
 const weakExplainTextEl = document.getElementById("weakExplainText");
 const weakResultLabelEl = document.getElementById("weakResultLabel");
+const weakPrevBtn = document.getElementById("weakPrevBtn");
 const weakNextBtn = document.getElementById("weakNextBtn");
 const weakProgressText = document.getElementById("weakProgressText");
 const weakScoreText = document.getElementById("weakScoreText");
@@ -5983,21 +6342,23 @@ const weakResumeDiscardBtn = document.getElementById("weakResumeDiscardBtn");
 
 let weakQuizSet = [];
 let weakCurrent = 0;
+let weakViewIndex = 0;
 let weakScore = 0;
-let weakAnswered = false;
 let weakWrongAnswers = [];
+let weakQuizAnswers = [];
 
 /* ---- 中断・再開(苦手問題) ---- */
 const WEAK_SESSION_KEY = "lpic101_weak_session_v1";
 
 function saveWeakSession() {
   try {
-    const resumeAt = weakAnswered ? weakCurrent + 1 : weakCurrent;
+    const resumeAt = weakQuizAnswers[weakCurrent] ? weakCurrent + 1 : weakCurrent;
     localStorage.setItem(WEAK_SESSION_KEY, JSON.stringify({
       ids: weakQuizSet.map(qid),
       current: resumeAt,
       score: weakScore,
-      wrongIds: weakWrongAnswers.map(qid)
+      wrongIds: weakWrongAnswers.map(qid),
+      answers: weakQuizAnswers.map(a => (a ? a.selected : null))
     }));
   } catch (e) { /* ignore */ }
 }
@@ -6043,8 +6404,10 @@ function startWeakQuiz() {
   }
   weakQuizSet = pool;
   weakCurrent = 0;
+  weakViewIndex = 0;
   weakScore = 0;
   weakWrongAnswers = [];
+  weakQuizAnswers = [];
   weakStartArea.style.display = "none";
   weakFinishArea.style.display = "none";
   weakQuizArea.style.display = "block";
@@ -6054,9 +6417,14 @@ function startWeakQuiz() {
 function resumeWeakQuiz() {
   const saved = loadWeakSession();
   if (!saved) { renderWeakResume(); return; }
-  const restored = saved.ids.map(id => ALL_QUESTIONS_BY_ID.get(id)).filter(Boolean);
-  weakQuizSet = restored;
+  const savedAnswers = saved.answers || [];
+  const pairs = saved.ids
+    .map((id, i) => ({ q: ALL_QUESTIONS_BY_ID.get(id), sel: savedAnswers[i] }))
+    .filter(p => p.q);
+  weakQuizSet = pairs.map(p => p.q);
+  weakQuizAnswers = pairs.map(p => (p.sel === null || p.sel === undefined ? null : { selected: p.sel }));
   weakCurrent = Math.min(saved.current, weakQuizSet.length);
+  weakViewIndex = weakCurrent;
   weakScore = saved.score;
   weakWrongAnswers = (saved.wrongIds || []).map(id => ALL_QUESTIONS_BY_ID.get(id)).filter(Boolean);
   clearWeakSession();
@@ -6078,31 +6446,48 @@ function backToWeakStart() {
 }
 
 function renderWeakQuestion() {
-  weakAnswered = false;
-  const q = weakQuizSet[weakCurrent];
+  const q = weakQuizSet[weakViewIndex];
+  const savedAns = weakQuizAnswers[weakViewIndex];
   weakCategoryEl.textContent = q.category;
   weakQuestionEl.textContent = q.question;
   weakChoicesEl.innerHTML = "";
-  weakExplainEl.classList.remove("show");
-  weakNextBtn.classList.remove("show");
 
   q.choices.forEach((choiceText, i) => {
     const btn = document.createElement("button");
     btn.className = "choice";
     btn.textContent = choiceText;
-    btn.addEventListener("click", () => selectWeakChoice(i));
+    if (savedAns) {
+      btn.disabled = true;
+      if (i === q.answer) btn.classList.add("correct");
+      else if (i === savedAns.selected) btn.classList.add("wrong");
+    } else {
+      btn.addEventListener("click", () => selectWeakChoice(i));
+    }
     weakChoicesEl.appendChild(btn);
   });
 
-  weakProgressText.textContent = `${weakCurrent + 1} / ${weakQuizSet.length}`;
+  if (savedAns) {
+    const wasCorrect = savedAns.selected === q.answer;
+    weakResultLabelEl.textContent = wasCorrect ? "正解" : "不正解";
+    weakResultLabelEl.className = "result-label " + (wasCorrect ? "ok" : "ng");
+    weakExplainTextEl.textContent = q.explain;
+    weakExplainEl.classList.add("show");
+    weakNextBtn.classList.add("show");
+  } else {
+    weakExplainEl.classList.remove("show");
+    weakNextBtn.classList.remove("show");
+  }
+  weakPrevBtn.classList.toggle("show", weakViewIndex > 0);
+
+  weakProgressText.textContent = `${weakViewIndex + 1} / ${weakQuizSet.length}`;
   weakScoreText.textContent = `正解 ${weakScore}`;
-  weakBarFill.style.width = `${(weakCurrent / weakQuizSet.length) * 100}%`;
+  weakBarFill.style.width = `${(weakViewIndex / weakQuizSet.length) * 100}%`;
 }
 
 function selectWeakChoice(i) {
-  if (weakAnswered) return;
-  weakAnswered = true;
-  const q = weakQuizSet[weakCurrent];
+  if (weakQuizAnswers[weakViewIndex]) return;
+  const q = weakQuizSet[weakViewIndex];
+  weakQuizAnswers[weakViewIndex] = { selected: i };
   const buttons = weakChoicesEl.querySelectorAll(".choice");
   buttons.forEach((b, idx) => {
     b.disabled = true;
@@ -6136,12 +6521,25 @@ function finishWeakQuiz() {
   renderWrongList(weakWrongPanel, weakWrongList, weakWrongAnswers);
 }
 
+weakPrevBtn.addEventListener("click", () => {
+  if (weakViewIndex > 0) {
+    weakViewIndex--;
+    renderWeakQuestion();
+  }
+});
+
 weakNextBtn.addEventListener("click", () => {
-  weakCurrent++;
-  if (weakCurrent < weakQuizSet.length) {
+  if (weakViewIndex < weakCurrent) {
+    weakViewIndex++;
     renderWeakQuestion();
   } else {
-    finishWeakQuiz();
+    weakCurrent++;
+    weakViewIndex = weakCurrent;
+    if (weakCurrent < weakQuizSet.length) {
+      renderWeakQuestion();
+    } else {
+      finishWeakQuiz();
+    }
   }
 });
 
@@ -6149,7 +6547,7 @@ weakStartBtn.addEventListener("click", startWeakQuiz);
 document.getElementById("weakRetryBtn").addEventListener("click", startWeakQuiz);
 document.getElementById("weakQuitBtn").addEventListener("click", () => {
   if (weakQuizSet.length > 0 && weakCurrent < weakQuizSet.length) {
-    const answeredCount = weakAnswered ? weakCurrent + 1 : weakCurrent;
+    const answeredCount = weakQuizAnswers[weakCurrent] ? weakCurrent + 1 : weakCurrent;
     const ok = confirm(`ここまで ${answeredCount} / ${weakQuizSet.length} 問に解答済みです(正解 ${weakScore} 問)。\n保存して一覧に戻りますか?`);
     if (!ok) return;
     saveWeakSession();
