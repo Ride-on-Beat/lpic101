@@ -107,7 +107,7 @@
     border-radius: 10px;
     padding: 22px;
   }
-  #quizArea .card.origin-orig, #freqQuizArea .card.origin-orig {
+  #quizArea .card.origin-orig, #freqQuizArea .card.origin-orig, #appliedQuizArea .card.origin-orig {
     background: #fff4e6;
     border-color: #e8a33d;
   }
@@ -115,9 +115,13 @@
     background: #e9f1fb;
     border-color: #3d7dc9;
   }
-  #quizArea .card.origin-extra, #freqQuizArea .card.origin-extra {
+  #quizArea .card.origin-extra, #freqQuizArea .card.origin-extra, #appliedQuizArea .card.origin-extra {
     background: #f0f0f0;
     border-color: #9a9a9a;
+  }
+  #appliedQuizArea .card.origin-mock {
+    background: #e6f2ff;
+    border-color: #4a90d9;
   }
   #quizArea .card.origin-imported, #freqQuizArea .card.origin-imported {
     background: #e3e3e3;
@@ -154,6 +158,7 @@
   .choice:hover { border-color: var(--accent); }
   .choice.correct { background: var(--accent-bg); border-color: var(--accent); }
   .choice.wrong { background: var(--wrong-bg); border-color: var(--wrong); }
+  .choice.selected { background: var(--accent-bg); border-color: var(--accent); font-weight: bold; }
   .choice:disabled { cursor: default; }
   .explain {
     margin-top: 14px;
@@ -307,6 +312,10 @@
     cursor: pointer;
     text-decoration: underline;
   }
+  /* .card(白背景)の上に置かれる場合は白文字だと見えないため、暗めの色にする */
+  .card .quit-btn {
+    color: var(--sub);
+  }
   .finish .score {
     font-size: 36px;
     font-weight: bold;
@@ -325,13 +334,32 @@
   .wrong-panel {
     margin-top: 20px;
   }
+  .top-btn-row {
+    text-align: center;
+    margin-top: 20px;
+  }
+  .goto-weak-link {
+    display: block;
+    margin: 12px auto 0;
+    padding: 6px;
+    border: none;
+    background: none;
+    color: var(--sub);
+    font-size: 13px;
+    text-decoration: underline;
+    cursor: pointer;
+  }
   .wrong-item {
+    position: relative;
     background: var(--card);
     border: 1px solid var(--wrong);
     border-radius: 10px;
-    padding: 16px;
+    padding: 16px 44px 16px 16px;
     margin-bottom: 10px;
     text-align: left;
+  }
+  .wrong-item.is-correct {
+    border-color: var(--line);
   }
   .wrong-item .question {
     margin: 10px 0 12px;
@@ -346,6 +374,21 @@
     font-size: 13px;
     line-height: 1.6;
     color: var(--sub);
+  }
+  .mark-star-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    border: none;
+    background: none;
+    padding: 4px;
+    font-size: 22px;
+    line-height: 1;
+    color: var(--line);
+    cursor: pointer;
+  }
+  .mark-star-btn.on {
+    color: #e0a000;
   }
 
   .toptabs {
@@ -611,12 +654,15 @@
     <div class="card finish">
       <div>お疲れさまでした</div>
       <div class="score" id="finalScore">0 / 15</div>
-      <button class="retry-btn" id="topBtn">トップへ戻る</button>
       <button class="quit-btn" id="backBtn">分野の選択に戻る</button>
     </div>
     <div class="wrong-panel" id="wrongPanel" style="display:none">
-      <p class="field-label">間違えた問題</p>
+      <p class="field-label">解答した問題(★で苦手問題への追加・解除を手動で切り替えられます)</p>
       <div id="wrongList"></div>
+    </div>
+    <div class="top-btn-row">
+      <button class="retry-btn" id="topBtn">トップへ戻る</button>
+      <button class="goto-weak-link" id="gotoWeakBtn">苦手問題へ移動</button>
     </div>
   </div>
 </div>
@@ -697,12 +743,78 @@
     <div class="card finish">
       <div>お疲れさまでした</div>
       <div class="score" id="freqFinalScore">0 / 15</div>
-      <button class="retry-btn" id="freqTopBtn">トップへ戻る</button>
       <button class="quit-btn" id="freqBackBtn">分野の選択に戻る</button>
     </div>
     <div class="wrong-panel" id="freqWrongPanel" style="display:none">
-      <p class="field-label">間違えた問題</p>
+      <p class="field-label">解答した問題(★で苦手問題への追加・解除を手動で切り替えられます)</p>
       <div id="freqWrongList"></div>
+    </div>
+    <div class="top-btn-row">
+      <button class="retry-btn" id="freqTopBtn">トップへ戻る</button>
+      <button class="goto-weak-link" id="freqGotoWeakBtn">苦手問題へ移動</button>
+    </div>
+  </div>
+</div>
+
+<div class="app page" id="page-applied">
+  <h1>応用問題</h1>
+  <div class="sub">全2154問。より発展的・実践的な内容を扱います。一部は複数選択形式です</div>
+
+  <div id="appliedStartArea">
+    <div class="start-card resume-card" id="appliedResumeCard" style="display:none">
+      <p class="field-label">前回の続きがあります</p>
+      <p class="resume-text" id="appliedResumeText"></p>
+      <button class="start-btn" id="appliedResumeBtn">続きから再開する</button>
+      <button class="discard-link" id="appliedResumeDiscardBtn">破棄して新しく始める</button>
+    </div>
+    <div class="start-card">
+      <p class="field-label">出題する分野を選ぶ</p>
+      <div class="cat-list" id="appliedCatList"></div>
+
+      <p class="field-label">出題数</p>
+      <div class="count-row" id="appliedCountRow"></div>
+
+      <button class="start-btn" id="appliedStartBtn">解き始める</button>
+    </div>
+  </div>
+
+  <div id="appliedQuizArea" style="display:none">
+    <div class="progress-row">
+      <span id="appliedProgressText">1 / 15</span>
+      <span id="appliedScoreText">正解 0</span>
+    </div>
+    <div class="bar"><div class="bar-fill" id="appliedBarFill" style="width:0%"></div></div>
+
+    <div class="card" id="appliedQuizCard">
+      <div class="category" id="appliedCategory"></div>
+      <div class="question" id="appliedQuestion"></div>
+      <div id="appliedChoices"></div>
+      <div class="explain" id="appliedExplain">
+        <div class="result-label" id="appliedResultLabel"></div>
+        <div id="appliedExplainText"></div>
+      </div>
+      <button class="next-btn" id="appliedSubmitBtn">回答する</button>
+      <div class="nav-row">
+        <button class="prev-btn" id="appliedPrevBtn">前の問題へ</button>
+        <button class="next-btn" id="appliedNextBtn">次の問題へ</button>
+      </div>
+    </div>
+    <button class="quit-btn" id="appliedQuitBtn">分野の選択に戻る</button>
+  </div>
+
+  <div id="appliedFinishArea" style="display:none">
+    <div class="card finish">
+      <div>お疲れさまでした</div>
+      <div class="score" id="appliedFinalScore">0 / 15</div>
+      <button class="quit-btn" id="appliedBackBtn">分野の選択に戻る</button>
+    </div>
+    <div class="wrong-panel" id="appliedWrongPanel" style="display:none">
+      <p class="field-label">解答した問題(★で苦手問題への追加・解除を手動で切り替えられます)</p>
+      <div id="appliedWrongList"></div>
+    </div>
+    <div class="top-btn-row">
+      <button class="retry-btn" id="appliedTopBtn">トップへ戻る</button>
+      <button class="goto-weak-link" id="appliedGotoWeakBtn">苦手問題へ移動</button>
     </div>
   </div>
 </div>
@@ -720,6 +832,7 @@
     </div>
     <div class="start-card">
       <p class="field-label" id="weakCountText">間違えた問題はまだありません</p>
+      <div class="cat-list" id="weakCatList"></div>
       <button class="start-btn" id="weakStartBtn">苦手問題はまだありません</button>
     </div>
     <button class="quit-btn" id="weakClearBtn" style="display:none">記録をクリア</button>
@@ -756,7 +869,7 @@
       <button class="quit-btn" id="weakBackBtn">一覧に戻る</button>
     </div>
     <div class="wrong-panel" id="weakWrongPanel" style="display:none">
-      <p class="field-label">まだ間違えている問題</p>
+      <p class="field-label">解答した問題(★で苦手問題への追加・解除を手動で切り替えられます)</p>
       <div id="weakWrongList"></div>
     </div>
   </div>
@@ -775,12 +888,17 @@
     <span class="tab-icon">🔥</span>
     <span class="tab-label">頻出問題</span>
   </button>
+  <button data-page="applied">
+    <span class="tab-icon">🎯</span>
+    <span class="tab-label">応用問題</span>
+  </button>
   <button data-page="wrong">
     <span class="tab-icon">🔁</span>
     <span class="tab-label">苦手問題</span>
   </button>
 </footer>
 
+<script src="applied-questions.js"></script>
 <script>
 const OLD_QUESTIONS = [
   {
@@ -4400,16 +4518,58 @@ function shuffle(arr) {
   return a;
 }
 
-function renderWrongList(panelEl, listEl, wrongs) {
+/* 単一選択・複数選択(answerが配列)の両方に対応した正誤判定 */
+function isAnswerCorrect(q, selected) {
+  if (selected === null || selected === undefined) return false;
+  if (Array.isArray(q.answer)) {
+    if (!Array.isArray(selected)) return false;
+    const correctSet = new Set(q.answer);
+    const selSet = new Set(selected);
+    return correctSet.size === selSet.size && [...correctSet].every(x => selSet.has(x));
+  }
+  return selected === q.answer;
+}
+
+/* 正解の選択肢テキストを表示用に整形(複数選択は「、」区切り) */
+function correctAnswerText(q) {
+  if (Array.isArray(q.answer)) {
+    return q.answer.map(i => q.choices[i]).join("、");
+  }
+  return q.choices[q.answer];
+}
+
+function renderResultList(panelEl, listEl, quizSetArr, answersArr) {
   listEl.innerHTML = "";
-  if (wrongs.length === 0) {
+  if (!quizSetArr || quizSetArr.length === 0) {
     panelEl.style.display = "none";
     return;
   }
   panelEl.style.display = "block";
-  wrongs.forEach(q => {
+  quizSetArr.forEach((q, i) => {
+    const ans = answersArr[i];
+    const wasCorrect = !!ans && isAnswerCorrect(q, ans.selected);
+
     const item = document.createElement("div");
-    item.className = "wrong-item";
+    item.className = "wrong-item" + (wasCorrect ? " is-correct" : "");
+
+    const markBtn = document.createElement("button");
+    markBtn.type = "button";
+    markBtn.className = "mark-star-btn" + (wrongSet.has(qid(q)) ? " on" : "");
+    markBtn.textContent = wrongSet.has(qid(q)) ? "★" : "☆";
+    markBtn.title = "苦手問題への追加・解除を手動で切り替える";
+    markBtn.addEventListener("click", () => {
+      if (wrongSet.has(qid(q))) {
+        markMastered(q);
+        markBtn.classList.remove("on");
+        markBtn.textContent = "☆";
+      } else {
+        markWrong(q);
+        markBtn.classList.add("on");
+        markBtn.textContent = "★";
+      }
+      renderWeakStart();
+    });
+
     const cat = document.createElement("div");
     cat.className = "category";
     cat.textContent = q.category;
@@ -4418,11 +4578,11 @@ function renderWrongList(panelEl, listEl, wrongs) {
     question.textContent = q.question;
     const answer = document.createElement("div");
     answer.className = "wrong-answer";
-    answer.textContent = "正解: " + q.choices[q.answer];
+    answer.textContent = "正解: " + correctAnswerText(q);
     const explain = document.createElement("div");
     explain.className = "wrong-explain";
     explain.textContent = q.explain;
-    item.append(cat, question, answer, explain);
+    item.append(markBtn, cat, question, answer, explain);
     listEl.appendChild(item);
   });
 }
@@ -4553,7 +4713,7 @@ function finishExam() {
   quizArea.style.display = "none";
   finishArea.style.display = "block";
   finalScore.textContent = `${score} / ${quizSet.length}`;
-  renderWrongList(wrongPanel, wrongList, wrongAnswers);
+  renderResultList(wrongPanel, wrongList, quizSet, quizAnswers);
 }
 
 prevBtn.addEventListener("click", () => {
@@ -4582,6 +4742,11 @@ nextBtn.addEventListener("click", () => {
 document.getElementById("topBtn").addEventListener("click", () => {
   backToStart();
   switchTab("exam");
+});
+document.getElementById("gotoWeakBtn").addEventListener("click", () => {
+  backToStart();
+  renderWeakStart();
+  switchTab("wrong");
 });
 document.getElementById("quitBtn").addEventListener("click", () => {
   if (quizSet.length > 0 && current < quizSet.length) {
@@ -6876,7 +7041,7 @@ function finishFreqQuiz() {
   freqQuizArea.style.display = "none";
   freqFinishArea.style.display = "block";
   freqFinalScore.textContent = `${freqScore} / ${freqQuizSet.length}`;
-  renderWrongList(freqWrongPanel, freqWrongList, freqWrongAnswers);
+  renderResultList(freqWrongPanel, freqWrongList, freqQuizSet, freqQuizAnswers);
 }
 
 freqPrevBtn.addEventListener("click", () => {
@@ -6904,6 +7069,11 @@ freqNextBtn.addEventListener("click", () => {
 document.getElementById("freqTopBtn").addEventListener("click", () => {
   backToFreqStart();
   switchTab("exam");
+});
+document.getElementById("freqGotoWeakBtn").addEventListener("click", () => {
+  backToFreqStart();
+  renderWeakStart();
+  switchTab("wrong");
 });
 document.getElementById("freqQuitBtn").addEventListener("click", () => {
   if (freqQuizSet.length > 0 && freqCurrent < freqQuizSet.length) {
@@ -6955,6 +7125,7 @@ let wrongSet = loadWrongSet();
 const ALL_QUESTIONS_BY_ID = new Map();
 questions.forEach(q => { if (!ALL_QUESTIONS_BY_ID.has(qid(q))) ALL_QUESTIONS_BY_ID.set(qid(q), q); });
 FREQ_QUESTIONS.forEach(q => { if (!ALL_QUESTIONS_BY_ID.has(qid(q))) ALL_QUESTIONS_BY_ID.set(qid(q), q); });
+APPLIED_QUESTIONS.forEach(q => { if (!ALL_QUESTIONS_BY_ID.has(qid(q))) ALL_QUESTIONS_BY_ID.set(qid(q), q); });
 
 function markWrong(q) {
   wrongSet.add(qid(q));
@@ -6968,6 +7139,7 @@ function markMastered(q) {
 
 const weakStartArea = document.getElementById("weakStartArea");
 const weakCountText = document.getElementById("weakCountText");
+const weakCatList = document.getElementById("weakCatList");
 const weakStartBtn = document.getElementById("weakStartBtn");
 const weakClearBtn = document.getElementById("weakClearBtn");
 const weakQuizArea = document.getElementById("weakQuizArea");
@@ -6997,6 +7169,8 @@ let weakViewIndex = 0;
 let weakScore = 0;
 let weakWrongAnswers = [];
 let weakQuizAnswers = [];
+let selectedWeakCats = new Set();
+let weakSeenCats = new Set();
 
 /* ---- 中断・再開(苦手問題) ---- */
 const WEAK_SESSION_KEY = "lpic101_weak_session_v1";
@@ -7035,20 +7209,54 @@ function renderWeakResume() {
 function renderWeakStart() {
   renderWeakResume();
   const total = wrongSet.size;
+  const weakQuestions = [...wrongSet].map(id => ALL_QUESTIONS_BY_ID.get(id)).filter(Boolean);
+  const weakCats = [...new Set(weakQuestions.map(q => q.category))];
+
+  // 新しく登場した分野はデフォルトで選択済みにする(既存の選択解除状態は維持する)
+  weakCats.forEach(cat => {
+    if (!weakSeenCats.has(cat)) {
+      selectedWeakCats.add(cat);
+      weakSeenCats.add(cat);
+    }
+  });
+
+  weakCatList.innerHTML = "";
+  if (weakCats.length > 0) {
+    weakCatList.style.display = "block";
+    weakCats.forEach(cat => {
+      const count = weakQuestions.filter(q => q.category === cat).length;
+      const item = document.createElement("button");
+      item.className = "cat-item" + (selectedWeakCats.has(cat) ? " on" : "");
+      item.innerHTML = `<span>${cat}</span><span class="cat-count">${count}問</span>`;
+      item.addEventListener("click", () => {
+        if (selectedWeakCats.has(cat)) selectedWeakCats.delete(cat);
+        else selectedWeakCats.add(cat);
+        renderWeakStart();
+      });
+      weakCatList.appendChild(item);
+    });
+  } else {
+    weakCatList.style.display = "none";
+  }
+
   if (total === 0) {
     weakCountText.textContent = "間違えた問題はまだありません。予想問題や頻出問題で間違えると、ここに集まります。";
     weakStartBtn.textContent = "苦手問題はまだありません";
+    weakStartBtn.disabled = true;
   } else {
+    const available = weakQuestions.filter(q => selectedWeakCats.has(q.category)).length;
     weakCountText.textContent = `現在 ${total} 問たまっています`;
-    weakStartBtn.textContent = `解き直す(${total}問)`;
+    weakStartBtn.textContent = available === 0
+      ? "分野を1つ以上選んでください"
+      : `解き直す(${available}問)`;
+    weakStartBtn.disabled = available === 0;
   }
-  weakStartBtn.disabled = total === 0;
   weakClearBtn.style.display = total === 0 ? "none" : "block";
 }
 
 function startWeakQuiz() {
   clearWeakSession();
-  const pool = shuffle([...wrongSet].map(id => ALL_QUESTIONS_BY_ID.get(id)).filter(Boolean));
+  const pool = shuffle([...wrongSet].map(id => ALL_QUESTIONS_BY_ID.get(id)).filter(Boolean).filter(q => selectedWeakCats.has(q.category)));
   if (pool.length === 0) {
     renderWeakStart();
     return;
@@ -7169,7 +7377,7 @@ function finishWeakQuiz() {
   weakQuizArea.style.display = "none";
   weakFinishArea.style.display = "block";
   weakFinalScore.textContent = `${weakScore} / ${weakQuizSet.length}`;
-  renderWrongList(weakWrongPanel, weakWrongList, weakWrongAnswers);
+  renderResultList(weakWrongPanel, weakWrongList, weakQuizSet, weakQuizAnswers);
 }
 
 weakPrevBtn.addEventListener("click", () => {
@@ -7218,6 +7426,8 @@ weakClearBtn.addEventListener("click", () => {
   if (confirm("苦手問題の記録をすべて削除します。よろしいですか?")) {
     wrongSet = new Set();
     saveWrongSet(wrongSet);
+    selectedWeakCats = new Set();
+    weakSeenCats = new Set();
     renderWeakStart();
   }
 });
@@ -7225,7 +7435,354 @@ weakClearBtn.addEventListener("click", () => {
 renderWeakStart();
 
 /* ============================================================
-   ページ上部タブ(予想問題 / コマンド / 頻出問題 / 苦手問題)の切り替え
+   応用問題タブ(全2154問・一部複数選択あり)
+   ============================================================ */
+const appliedQuizCardEl = document.getElementById("appliedQuizCard");
+const appliedCategoryEl = document.getElementById("appliedCategory");
+const appliedQuestionEl = document.getElementById("appliedQuestion");
+const appliedChoicesEl = document.getElementById("appliedChoices");
+const appliedExplainEl = document.getElementById("appliedExplain");
+const appliedExplainTextEl = document.getElementById("appliedExplainText");
+const appliedResultLabelEl = document.getElementById("appliedResultLabel");
+const appliedSubmitBtn = document.getElementById("appliedSubmitBtn");
+const appliedPrevBtn = document.getElementById("appliedPrevBtn");
+const appliedNextBtn = document.getElementById("appliedNextBtn");
+const appliedProgressText = document.getElementById("appliedProgressText");
+const appliedScoreText = document.getElementById("appliedScoreText");
+const appliedBarFill = document.getElementById("appliedBarFill");
+const appliedQuizArea = document.getElementById("appliedQuizArea");
+const appliedFinishArea = document.getElementById("appliedFinishArea");
+const appliedFinalScore = document.getElementById("appliedFinalScore");
+const appliedStartArea = document.getElementById("appliedStartArea");
+const appliedCatList = document.getElementById("appliedCatList");
+const appliedCountRow = document.getElementById("appliedCountRow");
+const appliedStartBtn = document.getElementById("appliedStartBtn");
+const appliedWrongPanel = document.getElementById("appliedWrongPanel");
+const appliedWrongList = document.getElementById("appliedWrongList");
+
+const APPLIED_CATEGORIES = [...new Set(APPLIED_QUESTIONS.map(q => q.category))];
+const APPLIED_COUNT_OPTIONS = [10, 20, 30, "全部"];
+
+let appliedSelectedCats = new Set();
+let appliedSelectedCount = 20;
+let appliedQuizSet = [];
+let appliedCurrent = 0;
+let appliedViewIndex = 0;
+let appliedScore = 0;
+let appliedWrongAnswers = [];
+let appliedQuizAnswers = [];
+let appliedSelectedSet = new Set(); // 複数選択問題で、現在の問題に対して選ばれている選択肢
+
+/* ---- 中断・再開(応用問題) ---- */
+const APPLIED_SESSION_KEY = "lpic101_applied_session_v1";
+const appliedResumeCard = document.getElementById("appliedResumeCard");
+const appliedResumeText = document.getElementById("appliedResumeText");
+const appliedResumeBtn = document.getElementById("appliedResumeBtn");
+const appliedResumeDiscardBtn = document.getElementById("appliedResumeDiscardBtn");
+
+function saveAppliedSession() {
+  try {
+    const resumeAt = appliedQuizAnswers[appliedCurrent] ? appliedCurrent + 1 : appliedCurrent;
+    localStorage.setItem(APPLIED_SESSION_KEY, JSON.stringify({
+      ids: appliedQuizSet.map(qid),
+      current: resumeAt,
+      score: appliedScore,
+      wrongIds: appliedWrongAnswers.map(qid),
+      answers: appliedQuizAnswers.map(a => (a ? a.selected : null))
+    }));
+  } catch (e) { /* ignore */ }
+}
+function loadAppliedSession() {
+  try {
+    const raw = localStorage.getItem(APPLIED_SESSION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) { return null; }
+}
+function clearAppliedSession() {
+  try { localStorage.removeItem(APPLIED_SESSION_KEY); } catch (e) { /* ignore */ }
+}
+function renderAppliedResume() {
+  const saved = loadAppliedSession();
+  if (saved && saved.ids && saved.ids.length && saved.current < saved.ids.length) {
+    appliedResumeCard.style.display = "block";
+    appliedResumeText.textContent = `${saved.current} / ${saved.ids.length} 問まで解答済み(正解 ${saved.score} 問)`;
+  } else {
+    appliedResumeCard.style.display = "none";
+  }
+}
+
+function renderAppliedStart() {
+  renderAppliedResume();
+  appliedCatList.innerHTML = "";
+  APPLIED_CATEGORIES.forEach(cat => {
+    const total = APPLIED_QUESTIONS.filter(q => q.category === cat).length;
+    const item = document.createElement("button");
+    item.className = "cat-item" + (appliedSelectedCats.has(cat) ? " on" : "");
+    item.innerHTML = `<span>${cat}</span><span class="cat-count">${total}問</span>`;
+    item.addEventListener("click", () => {
+      if (appliedSelectedCats.has(cat)) appliedSelectedCats.delete(cat);
+      else appliedSelectedCats.add(cat);
+      renderAppliedStart();
+    });
+    appliedCatList.appendChild(item);
+  });
+
+  appliedCountRow.innerHTML = "";
+  APPLIED_COUNT_OPTIONS.forEach(opt => {
+    const btn = document.createElement("button");
+    btn.className = "count-btn" + (appliedSelectedCount === opt ? " on" : "");
+    btn.textContent = opt === "全部" ? "全部" : `${opt}問`;
+    btn.addEventListener("click", () => {
+      appliedSelectedCount = opt;
+      renderAppliedStart();
+    });
+    appliedCountRow.appendChild(btn);
+  });
+
+  const available = APPLIED_QUESTIONS.filter(q => appliedSelectedCats.has(q.category)).length;
+  appliedStartBtn.disabled = available === 0;
+  appliedStartBtn.textContent = available === 0
+    ? "分野を1つ以上選んでください"
+    : `解き始める(${available}問から出題)`;
+}
+
+function startAppliedQuiz() {
+  clearAppliedSession();
+  const pool = shuffle(APPLIED_QUESTIONS.filter(q => appliedSelectedCats.has(q.category)));
+  appliedQuizSet = appliedSelectedCount === "全部" ? pool : pool.slice(0, appliedSelectedCount);
+  appliedCurrent = 0;
+  appliedViewIndex = 0;
+  appliedScore = 0;
+  appliedWrongAnswers = [];
+  appliedQuizAnswers = [];
+  appliedStartArea.style.display = "none";
+  appliedFinishArea.style.display = "none";
+  appliedQuizArea.style.display = "block";
+  renderAppliedQuestion();
+}
+
+function resumeAppliedQuiz() {
+  const saved = loadAppliedSession();
+  if (!saved) { renderAppliedResume(); return; }
+  const savedAnswers = saved.answers || [];
+  const pairs = saved.ids
+    .map((id, i) => ({ q: ALL_QUESTIONS_BY_ID.get(id), sel: savedAnswers[i] }))
+    .filter(p => p.q);
+  appliedQuizSet = pairs.map(p => p.q);
+  appliedQuizAnswers = pairs.map(p => (p.sel === null || p.sel === undefined ? null : { selected: p.sel }));
+  appliedCurrent = Math.min(saved.current, appliedQuizSet.length);
+  appliedViewIndex = appliedCurrent;
+  appliedScore = saved.score;
+  appliedWrongAnswers = (saved.wrongIds || []).map(id => ALL_QUESTIONS_BY_ID.get(id)).filter(Boolean);
+  clearAppliedSession();
+  appliedStartArea.style.display = "none";
+  appliedFinishArea.style.display = "none";
+  appliedQuizArea.style.display = "block";
+  if (appliedQuizSet.length === 0 || appliedCurrent >= appliedQuizSet.length) {
+    finishAppliedQuiz();
+  } else {
+    renderAppliedQuestion();
+  }
+}
+
+function backToAppliedStart() {
+  appliedQuizArea.style.display = "none";
+  appliedFinishArea.style.display = "none";
+  appliedStartArea.style.display = "block";
+  renderAppliedStart();
+}
+
+function renderAppliedQuestion() {
+  const q = appliedQuizSet[appliedViewIndex];
+  const savedAns = appliedQuizAnswers[appliedViewIndex];
+  const isMulti = Array.isArray(q.answer);
+  appliedSelectedSet = new Set();
+  appliedQuizCardEl.classList.remove("origin-orig", "origin-extra", "origin-mock");
+  if (q.origin === "orig") appliedQuizCardEl.classList.add("origin-orig");
+  else if (q.origin === "extra") appliedQuizCardEl.classList.add("origin-extra");
+  else if (q.origin === "mock") appliedQuizCardEl.classList.add("origin-mock");
+  appliedCategoryEl.textContent = q.category;
+  appliedQuestionEl.textContent = q.question + (isMulti ? `(${q.answer.length}つ選択)` : "");
+  appliedChoicesEl.innerHTML = "";
+
+  const correctSet = new Set(isMulti ? q.answer : [q.answer]);
+  const savedSelSet = savedAns ? new Set(isMulti ? savedAns.selected : [savedAns.selected]) : null;
+
+  q.choices.forEach((choiceText, i) => {
+    const btn = document.createElement("button");
+    btn.className = "choice";
+    btn.textContent = choiceText;
+    if (savedAns) {
+      btn.disabled = true;
+      if (correctSet.has(i)) btn.classList.add("correct");
+      else if (savedSelSet.has(i)) btn.classList.add("wrong");
+    } else if (isMulti) {
+      btn.addEventListener("click", () => toggleAppliedChoice(i, btn));
+    } else {
+      btn.addEventListener("click", () => selectAppliedChoice(i));
+    }
+    appliedChoicesEl.appendChild(btn);
+  });
+
+  appliedSubmitBtn.classList.remove("show");
+  if (!savedAns && isMulti) appliedSubmitBtn.classList.add("show");
+
+  if (savedAns) {
+    const wasCorrect = isAnswerCorrect(q, savedAns.selected);
+    appliedResultLabelEl.textContent = wasCorrect ? "正解" : "不正解";
+    appliedResultLabelEl.className = "result-label " + (wasCorrect ? "ok" : "ng");
+    appliedExplainTextEl.textContent = q.explain;
+    appliedExplainEl.classList.add("show");
+    appliedNextBtn.classList.add("show");
+  } else {
+    appliedExplainEl.classList.remove("show");
+    appliedNextBtn.classList.remove("show");
+  }
+  appliedPrevBtn.classList.toggle("show", appliedViewIndex > 0);
+
+  appliedProgressText.textContent = `${appliedViewIndex + 1} / ${appliedQuizSet.length}`;
+  appliedScoreText.textContent = `正解 ${appliedScore}`;
+  appliedBarFill.style.width = `${(appliedViewIndex / appliedQuizSet.length) * 100}%`;
+}
+
+function toggleAppliedChoice(i, btn) {
+  if (appliedQuizAnswers[appliedViewIndex]) return;
+  if (appliedSelectedSet.has(i)) {
+    appliedSelectedSet.delete(i);
+    btn.classList.remove("selected");
+  } else {
+    appliedSelectedSet.add(i);
+    btn.classList.add("selected");
+  }
+}
+
+function gradeAppliedMulti() {
+  if (appliedQuizAnswers[appliedViewIndex]) return;
+  if (appliedSelectedSet.size === 0) return;
+  const q = appliedQuizSet[appliedViewIndex];
+  const selectedArr = [...appliedSelectedSet];
+  appliedQuizAnswers[appliedViewIndex] = { selected: selectedArr };
+  const wasCorrect = isAnswerCorrect(q, selectedArr);
+  const correctSet = new Set(q.answer);
+  const buttons = appliedChoicesEl.querySelectorAll(".choice");
+  buttons.forEach((b, idx) => {
+    b.disabled = true;
+    b.classList.remove("selected");
+    if (correctSet.has(idx)) b.classList.add("correct");
+    else if (appliedSelectedSet.has(idx)) b.classList.add("wrong");
+  });
+
+  if (wasCorrect) {
+    appliedScore++;
+    appliedResultLabelEl.textContent = "正解";
+    appliedResultLabelEl.className = "result-label ok";
+    markMastered(q);
+  } else {
+    appliedResultLabelEl.textContent = "不正解";
+    appliedResultLabelEl.className = "result-label ng";
+    appliedWrongAnswers.push(q);
+    markWrong(q);
+  }
+  appliedExplainTextEl.textContent = q.explain;
+  appliedExplainEl.classList.add("show");
+  appliedNextBtn.classList.add("show");
+  appliedSubmitBtn.classList.remove("show");
+  appliedScoreText.textContent = `正解 ${appliedScore}`;
+}
+
+function selectAppliedChoice(i) {
+  if (appliedQuizAnswers[appliedViewIndex]) return;
+  const q = appliedQuizSet[appliedViewIndex];
+  appliedQuizAnswers[appliedViewIndex] = { selected: i };
+  const buttons = appliedChoicesEl.querySelectorAll(".choice");
+  buttons.forEach((b, idx) => {
+    b.disabled = true;
+    if (idx === q.answer) b.classList.add("correct");
+    else if (idx === i) b.classList.add("wrong");
+  });
+
+  if (i === q.answer) {
+    appliedScore++;
+    appliedResultLabelEl.textContent = "正解";
+    appliedResultLabelEl.className = "result-label ok";
+    markMastered(q);
+  } else {
+    appliedResultLabelEl.textContent = "不正解";
+    appliedResultLabelEl.className = "result-label ng";
+    appliedWrongAnswers.push(q);
+    markWrong(q);
+  }
+  appliedExplainTextEl.textContent = q.explain;
+  appliedExplainEl.classList.add("show");
+  appliedNextBtn.classList.add("show");
+  appliedScoreText.textContent = `正解 ${appliedScore}`;
+}
+
+function finishAppliedQuiz() {
+  clearAppliedSession();
+  appliedBarFill.style.width = "100%";
+  appliedQuizArea.style.display = "none";
+  appliedFinishArea.style.display = "block";
+  appliedFinalScore.textContent = `${appliedScore} / ${appliedQuizSet.length}`;
+  renderResultList(appliedWrongPanel, appliedWrongList, appliedQuizSet, appliedQuizAnswers);
+}
+
+appliedSubmitBtn.addEventListener("click", gradeAppliedMulti);
+
+appliedPrevBtn.addEventListener("click", () => {
+  if (appliedViewIndex > 0) {
+    appliedViewIndex--;
+    renderAppliedQuestion();
+  }
+});
+
+appliedNextBtn.addEventListener("click", () => {
+  if (appliedViewIndex < appliedCurrent) {
+    appliedViewIndex++;
+    renderAppliedQuestion();
+  } else {
+    appliedCurrent++;
+    appliedViewIndex = appliedCurrent;
+    if (appliedCurrent < appliedQuizSet.length) {
+      renderAppliedQuestion();
+    } else {
+      finishAppliedQuiz();
+    }
+  }
+});
+
+document.getElementById("appliedTopBtn").addEventListener("click", () => {
+  backToAppliedStart();
+  switchTab("exam");
+});
+document.getElementById("appliedGotoWeakBtn").addEventListener("click", () => {
+  backToAppliedStart();
+  renderWeakStart();
+  switchTab("wrong");
+});
+document.getElementById("appliedQuitBtn").addEventListener("click", () => {
+  if (appliedQuizSet.length > 0 && appliedCurrent < appliedQuizSet.length) {
+    const answeredCount = appliedQuizAnswers[appliedCurrent] ? appliedCurrent + 1 : appliedCurrent;
+    const ok = confirm(`ここまで ${answeredCount} / ${appliedQuizSet.length} 問に解答済みです(正解 ${appliedScore} 問)。\n保存して分野選択画面に戻りますか?`);
+    if (!ok) return;
+    saveAppliedSession();
+  }
+  backToAppliedStart();
+});
+document.getElementById("appliedBackBtn").addEventListener("click", backToAppliedStart);
+appliedStartBtn.addEventListener("click", startAppliedQuiz);
+appliedResumeBtn.addEventListener("click", resumeAppliedQuiz);
+appliedResumeDiscardBtn.addEventListener("click", () => {
+  if (confirm("保存されている続きを削除します。よろしいですか?")) {
+    clearAppliedSession();
+    renderAppliedResume();
+  }
+});
+
+renderAppliedStart();
+
+/* ============================================================
+   ページ上部タブ(予想問題 / コマンド / 頻出問題 / 応用問題 / 苦手問題)の切り替え
    ============================================================ */
 function switchTab(pageName) {
   document.querySelectorAll(".toptabs button").forEach(b => b.classList.remove("on"));
