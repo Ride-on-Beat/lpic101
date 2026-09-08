@@ -107,15 +107,15 @@
     border-radius: 10px;
     padding: 22px;
   }
-  #quizArea .card.origin-orig, #freqQuizArea .card.origin-orig, #appliedQuizArea .card.origin-orig {
+  #quizArea .card.origin-orig, #appliedQuizArea .card.origin-orig {
     background: #fff4e6;
     border-color: #e8a33d;
   }
-  #quizArea .card.origin-new, #freqQuizArea .card.origin-new {
+  #quizArea .card.origin-new {
     background: #e9f1fb;
     border-color: #3d7dc9;
   }
-  #quizArea .card.origin-extra, #freqQuizArea .card.origin-extra, #appliedQuizArea .card.origin-extra {
+  #quizArea .card.origin-extra, #appliedQuizArea .card.origin-extra {
     background: #f0f0f0;
     border-color: #9a9a9a;
   }
@@ -123,7 +123,7 @@
     background: #e6f2ff;
     border-color: #4a90d9;
   }
-  #quizArea .card.origin-imported, #freqQuizArea .card.origin-imported {
+  #quizArea .card.origin-imported {
     background: #e3e3e3;
     border-color: #888888;
   }
@@ -599,6 +599,26 @@
     font-weight: 400;
   }
   details.cmd-group > div { padding: 0 15px 4px; }
+
+  .qlist-numgrid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .qlist-num-chip {
+    flex: 0 0 auto;
+    padding: 6px 4px;
+    min-width: 40px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--card);
+    font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: 12px;
+    color: var(--ink);
+    text-align: center;
+    cursor: pointer;
+  }
+  .qlist-num-chip:hover { border-color: var(--accent); }
 </style>
 </head>
 <body>
@@ -694,65 +714,31 @@
   </div>
 </div>
 
-<div class="app page" id="page-frequent">
-  <h1>頻出問題</h1>
-  <div class="sub">各課題60問・計240問。試験で特に狙われやすい基礎項目に絞った問題集です</div>
+<div class="app page" id="page-qlist">
+  <h1>問題一覧</h1>
+  <div class="sub">全<span id="qlistTotal"></span>問。データに追加された順番で番号を振っています。番号をタップすると内容を表示します</div>
 
-  <div id="freqStartArea">
-    <div class="start-card resume-card" id="freqResumeCard" style="display:none">
-      <p class="field-label">前回の続きがあります</p>
-      <p class="resume-text" id="freqResumeText"></p>
-      <button class="start-btn" id="freqResumeBtn">続きから再開する</button>
-      <button class="discard-link" id="freqResumeDiscardBtn">破棄して新しく始める</button>
-    </div>
-    <div class="start-card">
-      <p class="field-label">出題する分野を選ぶ</p>
-      <div class="cat-list" id="freqCatList"></div>
+  <div id="qlistGridArea">
+    <p class="field-label">分野で絞り込む(複数選択可・未選択で全分野)</p>
+    <div class="cat-list" id="qlistCatList"></div>
 
-      <p class="field-label">出題数</p>
-      <div class="count-row" id="freqCountRow"></div>
+    <p class="cmd-hit" id="qlistHit"></p>
 
-      <button class="start-btn" id="freqStartBtn">解き始める</button>
-    </div>
+    <div class="qlist-numgrid" id="qlistNumGrid"></div>
   </div>
 
-  <div id="freqQuizArea" style="display:none">
-    <div class="progress-row">
-      <span id="freqProgressText">1 / 15</span>
-      <span id="freqScoreText">正解 0</span>
-    </div>
-    <div class="bar"><div class="bar-fill" id="freqBarFill" style="width:0%"></div></div>
-
-    <div class="card" id="freqQuizCard">
-      <div class="category" id="freqCategory"></div>
-      <div class="question" id="freqQuestion"></div>
-      <div id="freqChoices"></div>
-      <div class="explain" id="freqExplain">
-        <div class="result-label" id="freqResultLabel"></div>
-        <div id="freqExplainText"></div>
+  <div id="qlistDetailArea" style="display:none">
+    <div class="card" id="qlistDetailCard">
+      <div class="category" id="qlistDetailMeta"></div>
+      <div class="question" id="qlistDetailQuestion"></div>
+      <div id="qlistDetailChoices"></div>
+      <div class="explain" id="qlistDetailExplain">
+        <div class="result-label" id="qlistDetailResultLabel"></div>
+        <div id="qlistDetailExplainText"></div>
       </div>
-      <div class="nav-row">
-        <button class="prev-btn" id="freqPrevBtn">前の問題へ</button>
-        <button class="next-btn" id="freqNextBtn">次の問題へ</button>
-      </div>
+      <button class="next-btn" id="qlistDetailSubmitBtn">回答する</button>
     </div>
-    <button class="quit-btn" id="freqQuitBtn">分野の選択に戻る</button>
-  </div>
-
-  <div id="freqFinishArea" style="display:none">
-    <div class="card finish">
-      <div>お疲れさまでした</div>
-      <div class="score" id="freqFinalScore">0 / 15</div>
-      <button class="quit-btn" id="freqBackBtn">分野の選択に戻る</button>
-    </div>
-    <div class="wrong-panel" id="freqWrongPanel" style="display:none">
-      <p class="field-label">解答した問題(★で苦手問題への追加・解除を手動で切り替えられます)</p>
-      <div id="freqWrongList"></div>
-    </div>
-    <div class="top-btn-row">
-      <button class="retry-btn" id="freqTopBtn">トップへ戻る</button>
-      <button class="goto-weak-link" id="freqGotoWeakBtn">苦手問題へ移動</button>
-    </div>
+    <button class="quit-btn" id="qlistBackBtn">一覧に戻る</button>
   </div>
 </div>
 
@@ -884,9 +870,9 @@
     <span class="tab-icon">⌨️</span>
     <span class="tab-label">コマンド</span>
   </button>
-  <button data-page="frequent">
-    <span class="tab-icon">🔥</span>
-    <span class="tab-label">頻出問題</span>
+  <button data-page="qlist">
+    <span class="tab-icon">📋</span>
+    <span class="tab-label">問題一覧</span>
   </button>
   <button data-page="applied">
     <span class="tab-icon">🎯</span>
@@ -5036,7 +5022,7 @@ hideMeaningBtn.addEventListener("click", () => {
 renderCmd();
 
 /* ============================================================
-   頻出問題タブ
+   頻出問題データ(専用タブは廃止。問題一覧タブのデータとして利用)
    ============================================================ */
 const FREQ_SET_A = [
   {
@@ -6809,292 +6795,152 @@ const FREQ_SET_C = [
 
 const FREQ_QUESTIONS = [...FREQ_SET_A, ...FREQ_SET_B, ...FREQ_SET_C];
 
-const freqQuizCardEl = document.getElementById("freqQuizCard");
-const freqCategoryEl = document.getElementById("freqCategory");
-const freqQuestionEl = document.getElementById("freqQuestion");
-const freqChoicesEl = document.getElementById("freqChoices");
-const freqExplainEl = document.getElementById("freqExplain");
-const freqExplainTextEl = document.getElementById("freqExplainText");
-const freqResultLabelEl = document.getElementById("freqResultLabel");
-const freqPrevBtn = document.getElementById("freqPrevBtn");
-const freqNextBtn = document.getElementById("freqNextBtn");
-const freqProgressText = document.getElementById("freqProgressText");
-const freqScoreText = document.getElementById("freqScoreText");
-const freqBarFill = document.getElementById("freqBarFill");
-const freqQuizArea = document.getElementById("freqQuizArea");
-const freqFinishArea = document.getElementById("freqFinishArea");
-const freqFinalScore = document.getElementById("freqFinalScore");
-const freqStartArea = document.getElementById("freqStartArea");
-const freqCatList = document.getElementById("freqCatList");
-const freqCountRow = document.getElementById("freqCountRow");
-const freqStartBtn = document.getElementById("freqStartBtn");
-const freqWrongPanel = document.getElementById("freqWrongPanel");
-const freqWrongList = document.getElementById("freqWrongList");
+/* ============================================================
+   問題一覧タブ(全問題をデータの追加順に番号付けして一覧表示)
+   ============================================================ */
+const QLIST_ITEMS = [...questions, ...FREQ_QUESTIONS, ...APPLIED_QUESTIONS].map((q, i) => ({ no: i + 1, q }));
+const QLIST_CATEGORIES = [...new Set(QLIST_ITEMS.map(item => item.q.category))];
 
-const FREQ_CATEGORIES = [...new Set(FREQ_QUESTIONS.map(q => q.category))];
-const FREQ_COUNT_OPTIONS = [10, 20, 30, "全部"];
+const qlistCatList = document.getElementById("qlistCatList");
+const qlistHitEl = document.getElementById("qlistHit");
+const qlistNumGridEl = document.getElementById("qlistNumGrid");
+const qlistTotalEl = document.getElementById("qlistTotal");
+const qlistGridAreaEl = document.getElementById("qlistGridArea");
+const qlistDetailAreaEl = document.getElementById("qlistDetailArea");
+const qlistDetailMetaEl = document.getElementById("qlistDetailMeta");
+const qlistDetailQuestionEl = document.getElementById("qlistDetailQuestion");
+const qlistDetailChoicesEl = document.getElementById("qlistDetailChoices");
+const qlistDetailExplainEl = document.getElementById("qlistDetailExplain");
+const qlistDetailResultLabelEl = document.getElementById("qlistDetailResultLabel");
+const qlistDetailExplainTextEl = document.getElementById("qlistDetailExplainText");
+const qlistDetailSubmitBtn = document.getElementById("qlistDetailSubmitBtn");
+const qlistBackBtn = document.getElementById("qlistBackBtn");
+qlistTotalEl.textContent = QLIST_ITEMS.length;
 
-let freqSelectedCats = new Set();
-let freqSelectedCount = 20;
-let freqQuizSet = [];
-let freqCurrent = 0;
-let freqViewIndex = 0;
-let freqScore = 0;
-let freqWrongAnswers = [];
-let freqQuizAnswers = [];
+let qlistSelectedCats = new Set();
+let qlistSelectedSet = new Set();
+let qlistAnswered = false;
 
-/* ---- 中断・再開(頻出問題) ---- */
-const FREQ_SESSION_KEY = "lpic101_freq_session_v1";
-const freqResumeCard = document.getElementById("freqResumeCard");
-const freqResumeText = document.getElementById("freqResumeText");
-const freqResumeBtn = document.getElementById("freqResumeBtn");
-const freqResumeDiscardBtn = document.getElementById("freqResumeDiscardBtn");
-
-function saveFreqSession() {
-  try {
-    const resumeAt = freqQuizAnswers[freqCurrent] ? freqCurrent + 1 : freqCurrent;
-    localStorage.setItem(FREQ_SESSION_KEY, JSON.stringify({
-      ids: freqQuizSet.map(qid),
-      current: resumeAt,
-      score: freqScore,
-      wrongIds: freqWrongAnswers.map(qid),
-      answers: freqQuizAnswers.map(a => (a ? a.selected : null))
-    }));
-  } catch (e) { /* ignore */ }
-}
-function loadFreqSession() {
-  try {
-    const raw = localStorage.getItem(FREQ_SESSION_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch (e) { return null; }
-}
-function clearFreqSession() {
-  try { localStorage.removeItem(FREQ_SESSION_KEY); } catch (e) { /* ignore */ }
-}
-function renderFreqResume() {
-  const saved = loadFreqSession();
-  if (saved && saved.ids && saved.ids.length && saved.current < saved.ids.length) {
-    freqResumeCard.style.display = "block";
-    freqResumeText.textContent = `${saved.current} / ${saved.ids.length} 問まで解答済み(正解 ${saved.score} 問)`;
-  } else {
-    freqResumeCard.style.display = "none";
-  }
-}
-
-function renderFreqStart() {
-  renderFreqResume();
-  freqCatList.innerHTML = "";
-  FREQ_CATEGORIES.forEach(cat => {
-    const total = FREQ_QUESTIONS.filter(q => q.category === cat).length;
+function renderQlistCats() {
+  qlistCatList.innerHTML = "";
+  QLIST_CATEGORIES.forEach(cat => {
+    const total = QLIST_ITEMS.filter(item => item.q.category === cat).length;
     const item = document.createElement("button");
-    item.className = "cat-item" + (freqSelectedCats.has(cat) ? " on" : "");
+    item.className = "cat-item" + (qlistSelectedCats.has(cat) ? " on" : "");
     item.innerHTML = `<span>${cat}</span><span class="cat-count">${total}問</span>`;
     item.addEventListener("click", () => {
-      if (freqSelectedCats.has(cat)) freqSelectedCats.delete(cat);
-      else freqSelectedCats.add(cat);
-      renderFreqStart();
+      if (qlistSelectedCats.has(cat)) qlistSelectedCats.delete(cat);
+      else qlistSelectedCats.add(cat);
+      renderQlistCats();
+      renderQlistGrid();
     });
-    freqCatList.appendChild(item);
+    qlistCatList.appendChild(item);
   });
-
-  freqCountRow.innerHTML = "";
-  FREQ_COUNT_OPTIONS.forEach(opt => {
-    const btn = document.createElement("button");
-    btn.className = "count-btn" + (freqSelectedCount === opt ? " on" : "");
-    btn.textContent = opt === "全部" ? "全部" : `${opt}問`;
-    btn.addEventListener("click", () => {
-      freqSelectedCount = opt;
-      renderFreqStart();
-    });
-    freqCountRow.appendChild(btn);
-  });
-
-  const available = FREQ_QUESTIONS.filter(q => freqSelectedCats.has(q.category)).length;
-  freqStartBtn.disabled = available === 0;
-  freqStartBtn.textContent = available === 0
-    ? "分野を1つ以上選んでください"
-    : `解き始める(${available}問から出題)`;
 }
 
-function startFreqQuiz() {
-  clearFreqSession();
-  const pool = shuffle(FREQ_QUESTIONS.filter(q => freqSelectedCats.has(q.category)));
-  freqQuizSet = freqSelectedCount === "全部" ? pool : pool.slice(0, freqSelectedCount);
-  freqCurrent = 0;
-  freqViewIndex = 0;
-  freqScore = 0;
-  freqWrongAnswers = [];
-  freqQuizAnswers = [];
-  freqStartArea.style.display = "none";
-  freqFinishArea.style.display = "none";
-  freqQuizArea.style.display = "block";
-  renderFreqQuestion();
-}
+function showQlistDetail(item) {
+  const q = item.q;
+  const isMulti = Array.isArray(q.answer);
+  qlistSelectedSet = new Set();
+  qlistAnswered = false;
 
-function resumeFreqQuiz() {
-  const saved = loadFreqSession();
-  if (!saved) { renderFreqResume(); return; }
-  const savedAnswers = saved.answers || [];
-  const pairs = saved.ids
-    .map((id, i) => ({ q: ALL_QUESTIONS_BY_ID.get(id), sel: savedAnswers[i] }))
-    .filter(p => p.q);
-  freqQuizSet = pairs.map(p => p.q);
-  freqQuizAnswers = pairs.map(p => (p.sel === null || p.sel === undefined ? null : { selected: p.sel }));
-  freqCurrent = Math.min(saved.current, freqQuizSet.length);
-  freqViewIndex = freqCurrent;
-  freqScore = saved.score;
-  freqWrongAnswers = (saved.wrongIds || []).map(id => ALL_QUESTIONS_BY_ID.get(id)).filter(Boolean);
-  clearFreqSession();
-  freqStartArea.style.display = "none";
-  freqFinishArea.style.display = "none";
-  freqQuizArea.style.display = "block";
-  if (freqQuizSet.length === 0 || freqCurrent >= freqQuizSet.length) {
-    finishFreqQuiz();
-  } else {
-    renderFreqQuestion();
-  }
-}
-
-function backToFreqStart() {
-  freqQuizArea.style.display = "none";
-  freqFinishArea.style.display = "none";
-  freqStartArea.style.display = "block";
-  renderFreqStart();
-}
-
-function renderFreqQuestion() {
-  const q = freqQuizSet[freqViewIndex];
-  const savedAns = freqQuizAnswers[freqViewIndex];
-  freqQuizCardEl.classList.remove("origin-orig", "origin-new", "origin-extra", "origin-imported");
-  if (q.origin === "imported") {
-    freqQuizCardEl.classList.add("origin-imported");
-  } else if (q.origin === "new") {
-    freqQuizCardEl.classList.add("origin-new");
-  }
-  freqCategoryEl.textContent = q.category;
-  freqQuestionEl.textContent = q.question;
-  freqChoicesEl.innerHTML = "";
+  qlistDetailMetaEl.textContent = `#${item.no} ${q.category}`;
+  qlistDetailQuestionEl.textContent = q.question + (isMulti ? `(${q.answer.length}つ選択)` : "");
+  qlistDetailChoicesEl.innerHTML = "";
 
   q.choices.forEach((choiceText, i) => {
     const btn = document.createElement("button");
     btn.className = "choice";
     btn.textContent = choiceText;
-    if (savedAns) {
-      btn.disabled = true;
-      if (i === q.answer) btn.classList.add("correct");
-      else if (i === savedAns.selected) btn.classList.add("wrong");
+    if (isMulti) {
+      btn.addEventListener("click", () => toggleQlistChoice(i, btn));
     } else {
-      btn.addEventListener("click", () => selectFreqChoice(i));
+      btn.addEventListener("click", () => gradeQlistAnswer(item, i));
     }
-    freqChoicesEl.appendChild(btn);
+    qlistDetailChoicesEl.appendChild(btn);
   });
 
-  if (savedAns) {
-    const wasCorrect = savedAns.selected === q.answer;
-    freqResultLabelEl.textContent = wasCorrect ? "正解" : "不正解";
-    freqResultLabelEl.className = "result-label " + (wasCorrect ? "ok" : "ng");
-    freqExplainTextEl.textContent = q.explain;
-    freqExplainEl.classList.add("show");
-    freqNextBtn.classList.add("show");
-  } else {
-    freqExplainEl.classList.remove("show");
-    freqNextBtn.classList.remove("show");
-  }
-  freqPrevBtn.classList.toggle("show", freqViewIndex > 0);
+  qlistDetailSubmitBtn.onclick = () => gradeQlistAnswer(item, [...qlistSelectedSet]);
+  qlistDetailSubmitBtn.classList.toggle("show", isMulti);
+  qlistDetailExplainEl.classList.remove("show");
 
-  freqProgressText.textContent = `${freqViewIndex + 1} / ${freqQuizSet.length}`;
-  freqScoreText.textContent = `正解 ${freqScore}`;
-  freqBarFill.style.width = `${(freqViewIndex / freqQuizSet.length) * 100}%`;
+  qlistGridAreaEl.style.display = "none";
+  qlistDetailAreaEl.style.display = "block";
+  window.scrollTo(0, 0);
 }
 
-function selectFreqChoice(i) {
-  if (freqQuizAnswers[freqViewIndex]) return;
-  const q = freqQuizSet[freqViewIndex];
-  freqQuizAnswers[freqViewIndex] = { selected: i };
-  const buttons = freqChoicesEl.querySelectorAll(".choice");
+function toggleQlistChoice(i, btn) {
+  if (qlistAnswered) return;
+  if (qlistSelectedSet.has(i)) {
+    qlistSelectedSet.delete(i);
+    btn.classList.remove("selected");
+  } else {
+    qlistSelectedSet.add(i);
+    btn.classList.add("selected");
+  }
+}
+
+function gradeQlistAnswer(item, selected) {
+  if (qlistAnswered) return;
+  const q = item.q;
+  const isMulti = Array.isArray(q.answer);
+  if (isMulti && selected.length === 0) return;
+  qlistAnswered = true;
+
+  const wasCorrect = isAnswerCorrect(q, selected);
+  const correctSet = new Set(isMulti ? q.answer : [q.answer]);
+  const selSet = new Set(isMulti ? selected : [selected]);
+  const buttons = qlistDetailChoicesEl.querySelectorAll(".choice");
   buttons.forEach((b, idx) => {
     b.disabled = true;
-    if (idx === q.answer) b.classList.add("correct");
-    else if (idx === i) b.classList.add("wrong");
+    b.classList.remove("selected");
+    if (correctSet.has(idx)) b.classList.add("correct");
+    else if (selSet.has(idx)) b.classList.add("wrong");
   });
 
-  if (i === q.answer) {
-    freqScore++;
-    freqResultLabelEl.textContent = "正解";
-    freqResultLabelEl.className = "result-label ok";
-    markMastered(q);
-  } else {
-    freqResultLabelEl.textContent = "不正解";
-    freqResultLabelEl.className = "result-label ng";
-    freqWrongAnswers.push(q);
-    markWrong(q);
-  }
-  freqExplainTextEl.textContent = q.explain;
-  freqExplainEl.classList.add("show");
-  freqNextBtn.classList.add("show");
-  freqScoreText.textContent = `正解 ${freqScore}`;
+  qlistDetailResultLabelEl.textContent = wasCorrect ? "正解" : "不正解";
+  qlistDetailResultLabelEl.className = "result-label " + (wasCorrect ? "ok" : "ng");
+  qlistDetailExplainTextEl.textContent = q.explain || "";
+  qlistDetailExplainEl.classList.add("show");
+  qlistDetailSubmitBtn.classList.remove("show");
+
+  if (wasCorrect) markMastered(q);
+  else markWrong(q);
 }
 
-function finishFreqQuiz() {
-  clearFreqSession();
-  freqBarFill.style.width = "100%";
-  freqQuizArea.style.display = "none";
-  freqFinishArea.style.display = "block";
-  freqFinalScore.textContent = `${freqScore} / ${freqQuizSet.length}`;
-  renderResultList(freqWrongPanel, freqWrongList, freqQuizSet, freqQuizAnswers);
+function backToQlistGrid() {
+  qlistDetailAreaEl.style.display = "none";
+  qlistGridAreaEl.style.display = "block";
+  window.scrollTo(0, 0);
 }
 
-freqPrevBtn.addEventListener("click", () => {
-  if (freqViewIndex > 0) {
-    freqViewIndex--;
-    renderFreqQuestion();
-  }
+function renderQlistGrid() {
+  const rows = qlistSelectedCats.size === 0
+    ? QLIST_ITEMS
+    : QLIST_ITEMS.filter(item => qlistSelectedCats.has(item.q.category));
+  qlistHitEl.textContent = rows.length + " 件";
+  qlistNumGridEl.innerHTML = "";
+  const frag = document.createDocumentFragment();
+  rows.forEach(item => {
+    const chip = document.createElement("button");
+    chip.className = "qlist-num-chip";
+    chip.textContent = item.no;
+    chip.dataset.no = item.no;
+    frag.appendChild(chip);
+  });
+  qlistNumGridEl.appendChild(frag);
+}
+
+qlistNumGridEl.addEventListener("click", (e) => {
+  const chip = e.target.closest(".qlist-num-chip");
+  if (!chip) return;
+  showQlistDetail(QLIST_ITEMS[Number(chip.dataset.no) - 1]);
 });
 
-freqNextBtn.addEventListener("click", () => {
-  if (freqViewIndex < freqCurrent) {
-    freqViewIndex++;
-    renderFreqQuestion();
-  } else {
-    freqCurrent++;
-    freqViewIndex = freqCurrent;
-    if (freqCurrent < freqQuizSet.length) {
-      renderFreqQuestion();
-    } else {
-      finishFreqQuiz();
-    }
-  }
-});
+qlistBackBtn.addEventListener("click", backToQlistGrid);
 
-document.getElementById("freqTopBtn").addEventListener("click", () => {
-  backToFreqStart();
-  switchTab("exam");
-});
-document.getElementById("freqGotoWeakBtn").addEventListener("click", () => {
-  backToFreqStart();
-  renderWeakStart();
-  switchTab("wrong");
-});
-document.getElementById("freqQuitBtn").addEventListener("click", () => {
-  if (freqQuizSet.length > 0 && freqCurrent < freqQuizSet.length) {
-    const answeredCount = freqQuizAnswers[freqCurrent] ? freqCurrent + 1 : freqCurrent;
-    const ok = confirm(`ここまで ${answeredCount} / ${freqQuizSet.length} 問に解答済みです(正解 ${freqScore} 問)。\n保存して分野選択画面に戻りますか?`);
-    if (!ok) return;
-    saveFreqSession();
-  }
-  backToFreqStart();
-});
-document.getElementById("freqBackBtn").addEventListener("click", backToFreqStart);
-freqStartBtn.addEventListener("click", startFreqQuiz);
-freqResumeBtn.addEventListener("click", resumeFreqQuiz);
-freqResumeDiscardBtn.addEventListener("click", () => {
-  if (confirm("保存されている続きを削除します。よろしいですか?")) {
-    clearFreqSession();
-    renderFreqResume();
-  }
-});
-
-renderFreqStart();
+renderQlistCats();
+renderQlistGrid();
 
 /* ============================================================
    苦手問題タブ(間違えた問題の記録・復習)
@@ -7240,7 +7086,7 @@ function renderWeakStart() {
   }
 
   if (total === 0) {
-    weakCountText.textContent = "間違えた問題はまだありません。予想問題や頻出問題で間違えると、ここに集まります。";
+    weakCountText.textContent = "間違えた問題はまだありません。予想問題や応用問題で間違えると、ここに集まります。";
     weakStartBtn.textContent = "苦手問題はまだありません";
     weakStartBtn.disabled = true;
   } else {
@@ -7782,7 +7628,7 @@ appliedResumeDiscardBtn.addEventListener("click", () => {
 renderAppliedStart();
 
 /* ============================================================
-   ページ上部タブ(予想問題 / コマンド / 頻出問題 / 応用問題 / 苦手問題)の切り替え
+   ページ上部タブ(予想問題 / コマンド / 問題一覧 / 応用問題 / 苦手問題)の切り替え
    ============================================================ */
 function switchTab(pageName) {
   document.querySelectorAll(".toptabs button").forEach(b => b.classList.remove("on"));
@@ -7790,6 +7636,8 @@ function switchTab(pageName) {
   if (targetBtn) targetBtn.classList.add("on");
   document.querySelectorAll(".page").forEach(p => p.classList.remove("on"));
   document.getElementById("page-" + pageName).classList.add("on");
+  // 苦手問題タブは他タブでの解答結果を反映するため、表示のたびに一覧を再計算する
+  if (pageName === "wrong") renderWeakStart();
   window.scrollTo(0, 0);
 }
 
